@@ -1,9 +1,41 @@
 #include "../Include/MisakiCoreBridge.h"
 #include "../Include/MisakiCore.hpp"
 #include "../Include/GuestCPU.hpp"
+#include "../Include/GuestDynamicExecution.hpp"
 #include "../Include/GuestX64Backend.hpp"
 
 extern "C" {
+
+int32_t misaki_core_run_dynamic_cpu_diagnostic(MisakiDynamicCPUReport *report) {
+    if (!report) return -1;
+    *report = MisakiDynamicCPUReport{};
+    try {
+        const auto run = misaki::runDynamicCPUBackendDiagnostic();
+        if (!run) return -2;
+        report->abi_version = 1;
+        report->loaded_segments = run->linked.mappedSegments;
+        report->imports = run->linked.importedSymbols;
+        report->relative_relocations = run->linked.relativeRelocations;
+        report->instructions = run->execution.state.instructions;
+        report->halted = run->execution.stop == misaki::X64Stop::halted ? 1u : 0u;
+        report->stack_restored = run->execution.stackRestored() ? 1u : 0u;
+        report->import_read_only = run->importReadOnly ? 1u : 0u;
+        report->rax = run->execution.rax();
+        report->entry = run->linked.entry;
+        report->linked_address = run->linked.firstImportTarget;
+        report->relative_value = run->relativeValue;
+        const bool passed = report->abi_version == 1 && report->loaded_segments == 2 &&
+                            report->imports == 1 && report->relative_relocations == 1 &&
+                            report->instructions == 5 && report->halted &&
+                            report->stack_restored && report->import_read_only &&
+                            report->rax == 42 && report->entry == 0x5000 &&
+                            report->linked_address == 0x9000 && report->relative_value == 0x5234;
+        return passed ? 0 : -3;
+    } catch (...) {
+        return -4;
+    }
+}
+
 
 int32_t misaki_core_run_backend_diagnostic(MisakiX64BackendReport *report) {
     if (!report) return -1;

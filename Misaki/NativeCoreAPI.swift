@@ -130,3 +130,51 @@ extension NativeCoreAPI {
         )
     }
 }
+
+
+/// Milestone 12: ET_DYN dynamic tables -> C++ guest ELF loader/import
+/// resolution -> portable x86-64 execution. Test firmware is self-authored.
+struct NativeDynamicModuleSnapshot {
+    let status: Int32
+    let abiVersion: UInt32
+    let segments: UInt32
+    let imports: UInt32
+    let relativeRelocations: UInt32
+    let instructions: UInt32
+    let halted: Bool
+    let stackRestored: Bool
+    let importReadOnly: Bool
+    let rax: UInt64
+    let entry: UInt64
+    let linkedAddress: UInt64
+    let relativeValue: UInt64
+
+    var passed: Bool {
+        status == 0 && abiVersion == 1 && segments == 2 &&
+        imports == 1 && relativeRelocations == 1 && instructions == 5 &&
+        halted && stackRestored && importReadOnly && rax == 42 &&
+        entry == 0x5000 && linkedAddress == 0x9000 && relativeValue == 0x5234
+    }
+}
+
+extension NativeCoreAPI {
+    static func runDynamicModuleDiagnostic() -> NativeDynamicModuleSnapshot {
+        var report = MisakiDynamicCPUReport()
+        let status = misaki_core_run_dynamic_cpu_diagnostic(&report)
+        return NativeDynamicModuleSnapshot(
+            status: status,
+            abiVersion: report.abi_version,
+            segments: report.loaded_segments,
+            imports: report.imports,
+            relativeRelocations: report.relative_relocations,
+            instructions: report.instructions,
+            halted: report.halted == 1,
+            stackRestored: report.stack_restored == 1,
+            importReadOnly: report.import_read_only == 1,
+            rax: report.rax,
+            entry: report.entry,
+            linkedAddress: report.linked_address,
+            relativeValue: report.relative_value
+        )
+    }
+}

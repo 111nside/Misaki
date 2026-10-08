@@ -37,6 +37,24 @@ final class NativeCoreBridgeTests: XCTestCase {
         XCTAssertEqual(result.segments, 0)
     }
 
+    func testNativeDynamicELFLoaderRunsOnExpandedBackend() {
+        let result = NativeCoreAPI.runDynamicModuleDiagnostic()
+        XCTAssertTrue(result.passed)
+        XCTAssertEqual(result.status, 0)
+        XCTAssertEqual(result.abiVersion, 1)
+        XCTAssertEqual(result.segments, 2)
+        XCTAssertEqual(result.imports, 1)
+        XCTAssertEqual(result.relativeRelocations, 1)
+        XCTAssertEqual(result.instructions, 5)
+        XCTAssertEqual(result.rax, 42)
+        XCTAssertEqual(result.entry, 0x5000)
+        XCTAssertEqual(result.linkedAddress, 0x9000)
+        XCTAssertEqual(result.relativeValue, 0x5234)
+        XCTAssertTrue(result.halted)
+        XCTAssertTrue(result.stackRestored)
+        XCTAssertTrue(result.importReadOnly)
+    }
+
     func testExpandedX64BackendFromSwift() {
         let result = NativeCoreAPI.runX64BackendDiagnostic()
         XCTAssertTrue(result.passed)

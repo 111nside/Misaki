@@ -54,6 +54,25 @@ typedef struct MisakiX64BackendReport {
 
 int32_t misaki_core_run_backend_diagnostic(MisakiX64BackendReport *report);
 
+// ET_DYN + dynamic import integration: self-authored guest executable only.
+// C-compatible ABI; no PS4 SELF, PRX, NID or firmware support is implied.
+typedef struct MisakiDynamicCPUReport {
+    uint32_t abi_version;
+    uint32_t loaded_segments;
+    uint32_t imports;
+    uint32_t relative_relocations;
+    uint32_t instructions;
+    uint32_t halted;
+    uint32_t stack_restored;
+    uint32_t import_read_only;
+    uint64_t rax;
+    uint64_t entry;
+    uint64_t linked_address;
+    uint64_t relative_value;
+} MisakiDynamicCPUReport;
+
+int32_t misaki_core_run_dynamic_cpu_diagnostic(MisakiDynamicCPUReport *report);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

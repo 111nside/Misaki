@@ -6,6 +6,7 @@ struct Milestone9View: View {
     @State private var reportText: String?
     @State private var executionText: String?
     @State private var backendText: String?
+    @State private var dynamicText: String?
 
     var body: some View {
         NavigationStack {
@@ -53,11 +54,27 @@ struct Milestone9View: View {
                             .textSelection(.enabled)
                     }
                 }
+                Section("Milestone 12 · Native dynamic modules") {
+                    Button {
+                        runDynamicModule()
+                    } label: {
+                        Label("Execute native ET_DYN module", systemImage: "shippingbox.and.arrow.backward")
+                    }
+                    Text("Loads a self-authored ET_DYN ELF64, reads PT_DYNAMIC and symbol tables, applies RELATIVE and JUMP_SLOT relocations, and runs a linked function using the expanded C++ backend. Not PS4 firmware.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    if let dynamicText {
+                        Text(dynamicText)
+                            .font(.system(.footnote, design: .monospaced))
+                            .textSelection(.enabled)
+                    }
+                }
                 Section("Native engine") {
                     Label("C++17 core with C / Swift bridge", systemImage: "checkmark.circle")
                     Label("Modular instruction execution interface", systemImage: "checkmark.circle")
                     Label("Integer, register, memory and branch subset", systemImage: "checkmark.circle")
                     Label("Native regression suite (CMake / CTest)", systemImage: "checkmark.circle")
+                    Label("Native ET_DYN linker with automatic import resolution", systemImage: "checkmark.circle")
                 }
                 Section("Not yet implemented") {
                     Label("Full x86-64, SSE/AVX and optimized ARM64 translation", systemImage: "xmark.circle")
@@ -70,6 +87,11 @@ struct Milestone9View: View {
             }
             .navigationTitle("Native core")
         }
+    }
+
+    private func runDynamicModule() {
+        let result = NativeCoreAPI.runDynamicModuleDiagnostic()
+        dynamicText = "Native ET_DYN: \(result.passed ? "PASS" : "FAIL")\nRAX=\(result.rax)\nInstructions=\(result.instructions)\nImports=\(result.imports)\nRelative relocations=\(result.relativeRelocations)\nEntry=0x\(String(result.entry, radix: 16))\nLinked address=0x\(String(result.linkedAddress, radix: 16))\nStack restored=\(result.stackRestored)\nStatus=\(result.status)"
     }
 
     private func runX64Backend() {
