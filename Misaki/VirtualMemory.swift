@@ -8,6 +8,7 @@ enum EmulatorError: Error, Equatable {
     case invalidInstruction(UInt8)
     case unsupportedSyscall(UInt64)
     case invalidSyscallArguments
+    case divideError
     case halted
     case stepLimit
 }
@@ -77,6 +78,20 @@ struct VirtualMemory {
     mutating func write8(_ address: UInt64, value: UInt8) throws {
         _ = try checked(address, for: .write)
         bytes[address] = value
+    }
+
+    /// Validate the whole write before changing any byte (atomic with respect
+    /// to guest protection faults; the interpreter itself is single-threaded).
+    mutating func writeBytes(_ address: UInt64, values: [UInt8]) throws {
+        guard !values.isEmpty, address <= UInt64.max - UInt64(values.count - 1) else {
+            throw EmulatorError.invalidMemoryMapping
+        }
+        for i in values.indices {
+            _ = try checked(address + UInt64(i), for: .write)
+        }
+        for i in values.indices {
+            bytes[address + UInt64(i)] = values[i]
+        }
     }
 
     func read64(_ address: UInt64) throws -> UInt64 {

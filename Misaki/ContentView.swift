@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var diagnosticResult: String?
     @State private var demoKernelResult: String?
     @State private var stackResult: String?
+    @State private var advancedResult: String?
 
     var body: some View {
         NavigationStack {
@@ -76,6 +77,20 @@ struct ContentView: View {
                             .textSelection(.enabled)
                     }
                 }
+                Section("Milestone 6: extended CPU") {
+                    Button {
+                        runAdvancedDemo()
+                    } label: {
+                        Label("Execute arithmetic and branch test", systemImage: "cpu")
+                    }
+                    Text("Tests x86-64 multiplication, CMP and conditional jumps. This is a synthetic CPU test, not PS4 firmware.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                    if let advancedResult {
+                        Text(advancedResult)
+                            .font(.system(.footnote, design: .monospaced))
+                            .textSelection(.enabled)
+                    }
+                }
                 Section("Import executable") {
                     Button {
                         showingImporter = true
@@ -101,7 +116,8 @@ struct ContentView: View {
                 }
                 Section("Emulation status") {
                     Label("Basic ELF64 loading: prototype", systemImage: "doc")
-                    Label("x86-64 interpreter: stack, CALL/RET prototype", systemImage: "cpu")
+                    Label("x86-64 interpreter: integer, ModRM, SSE subset", systemImage: "cpu")
+                    Label("Toy guest scheduler: isolated contexts only", systemImage: "person.2")
                     Label("Guest memory: basic read/write/execute checks", systemImage: "memorychip")
                     Label("Demo syscalls: available; PS4 syscalls: not implemented", systemImage: "gearshape")
                     Label("PS4 GPU translation: not implemented", systemImage: "display")
@@ -158,6 +174,26 @@ struct ContentView: View {
             stackResult = "CALL/RET test: \(passed ? "PASS" : "FAIL")\nRAX=\(cpu.rax), RCX=\(cpu.rcx)\nStack restored: \(cpu.rsp == initialSP)"
         } catch {
             stackResult = "CALL/RET test failed: \(error.localizedDescription)"
+        }
+    }
+
+    private func runAdvancedDemo() {
+        // mov rax,6; mov rbx,7; imul rax,rbx; cmp rax,42; jne fail; hlt; fail: nop; hlt
+        let bytes: [UInt8] = [
+            0x48, 0xB8, 6, 0, 0, 0, 0, 0, 0, 0,
+            0x48, 0xBB, 7, 0, 0, 0, 0, 0, 0, 0,
+            0x48, 0x0F, 0xAF, 0xC3,
+            0x48, 0x3D, 42, 0, 0, 0,
+            0x75, 0x01, 0xF4, 0x90, 0xF4
+        ]
+        do {
+            var cpu = X86Interpreter()
+            cpu.load(bytes)
+            try cpu.run(maxSteps: 20)
+            let pass = cpu.isHalted && cpu.rax == 42 && cpu.zeroFlag && cpu.rip == 0x1000 + 33
+            advancedResult = "Extended CPU test: \(pass ? "PASS" : "FAIL")\nRAX=\(cpu.rax), ZF=\(cpu.zeroFlag), instructions=\(cpu.executedInstructions)"
+        } catch {
+            advancedResult = "Extended CPU test failed: \(error.localizedDescription)"
         }
     }
 
