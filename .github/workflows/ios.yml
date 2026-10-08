@@ -34,13 +34,20 @@ jobs:
         run: xcodebuild -project Misaki.xcodeproj -scheme Misaki -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
       - name: Build unsigned iOS app
         run: xcodebuild -project Misaki.xcodeproj -scheme Misaki -configuration Debug -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath "$RUNNER_TEMP/MisakiDerivedData" CODE_SIGNING_ALLOWED=NO build
-      - name: Package app
+      - name: Package unsigned IPA
+        shell: bash
         run: |
-          cd "$RUNNER_TEMP/MisakiDerivedData/Build/Products/Debug-iphoneos"
-          zip -r "$GITHUB_WORKSPACE/Misaki-unsigned-app.zip" Misaki.app
-      - name: Upload artifact
+          set -euo pipefail
+          APP="$RUNNER_TEMP/MisakiDerivedData/Build/Products/Debug-iphoneos/Misaki.app"
+          test -d "$APP"
+          mkdir -p "$RUNNER_TEMP/MisakiIPA/Payload"
+          ditto "$APP" "$RUNNER_TEMP/MisakiIPA/Payload/Misaki.app"
+          cd "$RUNNER_TEMP/MisakiIPA"
+          /usr/bin/zip -qry "$GITHUB_WORKSPACE/Misaki-unsigned.ipa" Payload
+          /usr/bin/unzip -l "$GITHUB_WORKSPACE/Misaki-unsigned.ipa" | grep 'Payload/Misaki.app/'
+      - name: Upload unsigned IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Misaki-unsigned-ios
-          path: Misaki-unsigned-app.zip
+          name: Misaki-unsigned-IPA
+          path: Misaki-unsigned.ipa
           if-no-files-found: error
