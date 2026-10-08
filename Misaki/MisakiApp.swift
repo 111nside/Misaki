@@ -11,6 +11,8 @@ struct MisakiApp: App {
                     .tabItem { Label("Linker", systemImage: "link") }
                 Milestone8View()
                     .tabItem { Label("Modules", systemImage: "shippingbox") }
+                Milestone9View()
+                    .tabItem { Label("Core", systemImage: "cpu") }
             }
         }
     }

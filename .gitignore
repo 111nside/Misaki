@@ -4,3 +4,5 @@ DerivedData/
 *.xcworkspace/
 *.ipa
 *.app/
+build/
+**/CMakeFiles/

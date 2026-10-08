@@ -1,0 +1,27 @@
+name: Test Misaki Native Core
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'MisakiNative/**'
+      - '.github/workflows/native-core.yml'
+  pull_request:
+    paths:
+      - 'MisakiNative/**'
+      - '.github/workflows/native-core.yml'
+  workflow_dispatch:
+
+jobs:
+  portable-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Configure native core
+        run: cmake -S MisakiNative -B build/native -DCMAKE_BUILD_TYPE=Debug
+      - name: Compile native core and tests
+        run: cmake --build build/native --parallel 2
+      - name: Run C++ unit tests
+        run: ctest --test-dir build/native --output-on-failure
