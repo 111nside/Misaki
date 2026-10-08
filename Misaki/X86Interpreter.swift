@@ -1,6 +1,6 @@
 import Foundation
 
-/// A deliberately small, non-JIT x86-64 interpreter for independently authored test programs.
+/// Intentionally small, non-JIT x86-64 interpreter for independently developed test programs.
 /// Supported opcodes: NOP (90), MOV RAX, imm64 (48 B8), ADD RAX, imm32 (48 05), HLT (F4).
 struct X86Interpreter {
     var memory = VirtualMemory()
@@ -9,11 +9,22 @@ struct X86Interpreter {
     private(set) var isHalted = false
 
     mutating func load(_ program: [UInt8], at address: UInt64 = 0x1000) {
+        memory = VirtualMemory()
         memory.load(program, at: address)
         rip = address
         rax = 0
         isHalted = false
     }
+
+    /// Loads an ELF64 test binary's PT_LOAD segments, then starts at e_entry.
+    mutating func loadELF(_ data: Data) throws {
+        let image = try ELFLoader.load(data)
+        memory = image.memory
+        rip = image.entryPoint
+        rax = 0
+        isHalted = false
+    }
+
     private mutating func fetch() throws -> UInt8 {
         let value = try memory.read8(rip)
         rip &+= 1

@@ -7,6 +7,7 @@ struct ContentView: View {
     @State private var header: ELFHeader?
     @State private var fileSize: Int64?
     @State private var errorMessage: String?
+    @State private var diagnosticResult: String?
 
     var body: some View {
         NavigationStack {
@@ -23,13 +24,35 @@ struct ContentView: View {
                         }
                     }.padding(.vertical, 8)
                 }
+                Section("Hardware target") {
+                    LabeledContent("Model", value: PS4HardwareProfile.model)
+                    LabeledContent("CPU", value: PS4HardwareProfile.cpu)
+                    LabeledContent("GPU", value: PS4HardwareProfile.gpu)
+                    LabeledContent("RAM", value: PS4HardwareProfile.systemRAM)
+                    Text("These are target specifications; they are not currently emulated.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
+                Section("CPU / ELF diagnostic") {
+                    Button {
+                        runDemo()
+                    } label: {
+                        Label("Execute built-in ELF test", systemImage: "play.circle")
+                    }
+                    Text("Loads an original x86-64 ELF64 test file and executes MOV, ADD, HLT. No PS4 firmware or games are involved.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                    if let diagnosticResult {
+                        Text(diagnosticResult)
+                            .font(.system(.footnote, design: .monospaced))
+                            .textSelection(.enabled)
+                    }
+                }
                 Section("Import executable") {
                     Button {
                         showingImporter = true
                     } label: {
                         Label("Choose ELF file", systemImage: "square.and.arrow.down")
                     }
-                    Text("Inspects a standard ELF64 header without executing code.")
+                    Text("Inspects ELF64 headers only. Imported executables are never run.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
                 if let fileName {
@@ -47,10 +70,11 @@ struct ContentView: View {
                     }
                 }
                 Section("Emulation status") {
-                    Label("Executable inspection: prototype", systemImage: "checkmark.circle")
-                    Label("CPU execution: not implemented", systemImage: "cpu")
-                    Label("Graphics rendering: not implemented", systemImage: "display")
-                    Label("PS4 game booting: not implemented", systemImage: "lock")
+                    Label("Basic ELF64 loading: prototype", systemImage: "doc")
+                    Label("x86-64 interpreter: four instruction forms", systemImage: "cpu")
+                    Label("PS4 syscalls: not implemented", systemImage: "gearshape")
+                    Label("PS4 GPU translation: not implemented", systemImage: "display")
+                    Label("Genuine PS4 home menu: not bootable", systemImage: "lock")
                 }
             }
             .navigationTitle("Misaki")
@@ -68,6 +92,17 @@ struct ContentView: View {
             } message: {
                 Text(errorMessage ?? "Unknown error")
             }
+        }
+    }
+
+    private func runDemo() {
+        do {
+            var cpu = X86Interpreter()
+            try cpu.loadELF(DemoELF.make())
+            try cpu.run(maxSteps: 20)
+            diagnosticResult = "ELF loaded; halted=\(cpu.isHalted); RAX=\(cpu.rax) (expected 8)"
+        } catch {
+            diagnosticResult = "Demo failed: \(error.localizedDescription)"
         }
     }
 
