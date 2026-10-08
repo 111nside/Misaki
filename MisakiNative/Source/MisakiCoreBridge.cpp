@@ -1,8 +1,37 @@
 #include "../Include/MisakiCoreBridge.h"
 #include "../Include/MisakiCore.hpp"
 #include "../Include/GuestCPU.hpp"
+#include "../Include/GuestX64Backend.hpp"
 
 extern "C" {
+
+int32_t misaki_core_run_backend_diagnostic(MisakiX64BackendReport *report) {
+    if (!report) return -1;
+    *report = MisakiX64BackendReport{};
+    try {
+        const auto d = misaki::runX64BackendDiagnostic();
+        if (!d) return -2;
+        report->abi_version = 1;
+        report->backend_id = 1; // portable interpreter, not a JIT
+        report->instructions = d->execution.state.instructions;
+        report->halted = d->execution.stop == misaki::X64Stop::halted ? 1u : 0u;
+        report->stack_restored = d->execution.stackRestored() ? 1u : 0u;
+        report->zero_flag = d->execution.state.zeroFlag ? 1u : 0u;
+        report->resolved_imports = d->importedSymbols;
+        report->import_read_only = d->importReadOnly ? 1u : 0u;
+        report->rax = d->execution.rax();
+        report->linked_address = d->linkedAddress;
+        const bool pass = report->halted == 1 && report->stack_restored == 1 &&
+                          report->zero_flag == 0 && report->rax == 44 &&
+                          report->resolved_imports == 1 &&
+                          report->import_read_only == 1 &&
+                          report->linked_address == 0x3000 &&
+                          report->instructions == 13;
+        return pass ? 0 : -3;
+    } catch (...) {
+        return -4;
+    }
+}
 
 int32_t misaki_core_run_cpu_diagnostic(MisakiNativeCPUReport *report) {
     if (!report) return -1;
@@ -29,7 +58,7 @@ int32_t misaki_core_run_cpu_diagnostic(MisakiNativeCPUReport *report) {
     }
 }
 
-const char *misaki_core_version(void) { return "0.10.0-native-execution"; }
+const char *misaki_core_version(void) { return "0.11.0-portable-backend"; }
 
 int32_t misaki_core_run_diagnostic(MisakiCoreReport *report) {
     if (!report) return -1;
@@ -51,7 +80,7 @@ int32_t misaki_core_run_diagnostic(MisakiCoreReport *report) {
 }
 
 int32_t misaki_core_inspect_elf(const uint8_t *bytes, size_t length,
-                               uint32_t *type, uint32_t *load_segment_count) {
+                                uint32_t *type, uint32_t *load_segment_count) {
     if (!type || !load_segment_count) return -1;
     *type = 0;
     *load_segment_count = 0;

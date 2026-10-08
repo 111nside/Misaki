@@ -49,7 +49,6 @@ enum NativeCoreAPI {
     }
 }
 
-
 /// The C++ guest CPU's synthetic ELF and linked-library execution result.
 /// Does not report PS4 firmware, kernel, or game compatibility.
 struct NativeCPUExecutionSnapshot {
@@ -83,6 +82,48 @@ extension NativeCoreAPI {
             instructions: report.instructions,
             halted: report.halted == 1,
             stackRestored: report.stack_restored == 1,
+            importReadOnly: report.import_read_only == 1,
+            rax: report.rax,
+            linkedAddress: report.linked_address
+        )
+    }
+}
+
+/// Milestone 11's expandable native C++ CPU backend.
+struct NativeX64BackendSnapshot {
+    let status: Int32
+    let abiVersion: UInt32
+    let backendId: UInt32
+    let instructions: UInt32
+    let halted: Bool
+    let stackRestored: Bool
+    let zeroFlag: Bool
+    let imports: UInt32
+    let importReadOnly: Bool
+    let rax: UInt64
+    let linkedAddress: UInt64
+
+    var passed: Bool {
+        status == 0 && abiVersion == 1 && backendId == 1 &&
+        instructions == 13 && halted && stackRestored &&
+        !zeroFlag && imports == 1 && importReadOnly &&
+        rax == 44 && linkedAddress == 0x3000
+    }
+}
+
+extension NativeCoreAPI {
+    static func runX64BackendDiagnostic() -> NativeX64BackendSnapshot {
+        var report = MisakiX64BackendReport()
+        let status = misaki_core_run_backend_diagnostic(&report)
+        return NativeX64BackendSnapshot(
+            status: status,
+            abiVersion: report.abi_version,
+            backendId: report.backend_id,
+            instructions: report.instructions,
+            halted: report.halted == 1,
+            stackRestored: report.stack_restored == 1,
+            zeroFlag: report.zero_flag == 1,
+            imports: report.resolved_imports,
             importReadOnly: report.import_read_only == 1,
             rax: report.rax,
             linkedAddress: report.linked_address
