@@ -45,6 +45,18 @@ struct X86Interpreter {
         try installStack()
     }
 
+    /// Load an original ET_DYN guest test image at a specified load bias.
+    /// The module is fully linked and permissions are restored before execution.
+    @discardableResult
+    mutating func loadDynamicELF(_ data: Data, loadBias: UInt64,
+                                 libraries: GuestDynamicLinker = GuestDynamicLinker()) throws -> GuestDynamicELFImage {
+        let image = try GuestDynamicELFLoader.load(data, loadBias: loadBias, libraries: libraries)
+        memory = image.memory
+        reset(entry: image.entryPoint)
+        try installStack()
+        return image
+    }
+
     private mutating func reset(entry: UInt64) {
         registers = [UInt64](repeating: 0, count: 16)
         xmm = [[UInt8]](repeating: [UInt8](repeating: 0, count: 16), count: 16)
