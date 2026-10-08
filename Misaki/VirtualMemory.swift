@@ -3,10 +3,13 @@ import Foundation
 enum EmulatorError: Error, Equatable {
     case unmappedAddress(UInt64)
     case invalidInstruction(UInt8)
+    case unsupportedSyscall(UInt64)
+    case invalidSyscallArguments
     case halted
     case stepLimit
 }
 
+/// Sparse byte map. Segment permissions, page tables, MMU and ASLR are not modeled.
 struct VirtualMemory {
     private var bytes: [UInt64: UInt8] = [:]
     mutating func load(_ data: [UInt8], at address: UInt64) {

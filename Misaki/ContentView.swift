@@ -8,6 +8,7 @@ struct ContentView: View {
     @State private var fileSize: Int64?
     @State private var errorMessage: String?
     @State private var diagnosticResult: String?
+    @State private var demoKernelResult: String?
 
     var body: some View {
         NavigationStack {
@@ -46,6 +47,20 @@ struct ContentView: View {
                             .textSelection(.enabled)
                     }
                 }
+                Section("Demo userspace / system calls") {
+                    Button {
+                        runKernelDemo()
+                    } label: {
+                        Label("Execute demo userspace ELF", systemImage: "terminal")
+                    }
+                    Text("Executes a self-authored x86-64 ELF using a demonstration-only syscall interface; not PS4 firmware.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                    if let demoKernelResult {
+                        Text(demoKernelResult)
+                            .font(.system(.footnote, design: .monospaced))
+                            .textSelection(.enabled)
+                    }
+                }
                 Section("Import executable") {
                     Button {
                         showingImporter = true
@@ -71,8 +86,8 @@ struct ContentView: View {
                 }
                 Section("Emulation status") {
                     Label("Basic ELF64 loading: prototype", systemImage: "doc")
-                    Label("x86-64 interpreter: four instruction forms", systemImage: "cpu")
-                    Label("PS4 syscalls: not implemented", systemImage: "gearshape")
+                    Label("x86-64 interpreter: limited instruction subset", systemImage: "cpu")
+                    Label("Demo syscalls: available; PS4 syscalls: not implemented", systemImage: "gearshape")
                     Label("PS4 GPU translation: not implemented", systemImage: "display")
                     Label("Genuine PS4 home menu: not bootable", systemImage: "lock")
                 }
@@ -103,6 +118,17 @@ struct ContentView: View {
             diagnosticResult = "ELF loaded; halted=\(cpu.isHalted); RAX=\(cpu.rax) (expected 8)"
         } catch {
             diagnosticResult = "Demo failed: \(error.localizedDescription)"
+        }
+    }
+
+    private func runKernelDemo() {
+        do {
+            var cpu = X86Interpreter()
+            try cpu.loadELF(DemoKernelELF.make())
+            try cpu.run(maxSteps: 30)
+            demoKernelResult = "Output: \(cpu.consoleOutput.trimmingCharacters(in: .newlines))\nExit code: \(cpu.exitCode.map(String.init) ?? "none")\nInstructions: \(cpu.executedInstructions)"
+        } catch {
+            demoKernelResult = "Demo failed: \(error.localizedDescription)"
         }
     }
 
