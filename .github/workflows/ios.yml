@@ -1,0 +1,33 @@
+name: Build Misaki iOS
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Build for iOS Simulator
+        run: xcodebuild -project Misaki.xcodeproj -scheme Misaki -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+      - name: Build unsigned iOS app
+        run: xcodebuild -project Misaki.xcodeproj -scheme Misaki -configuration Debug -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath "$RUNNER_TEMP/MisakiDerivedData" CODE_SIGNING_ALLOWED=NO build
+      - name: Package app
+        run: |
+          cd "$RUNNER_TEMP/MisakiDerivedData/Build/Products/Debug-iphoneos"
+          zip -r "$GITHUB_WORKSPACE/Misaki-unsigned-app.zip" Misaki.app
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Misaki-unsigned-ios
+          path: Misaki-unsigned-app.zip
+          if-no-files-found: error
