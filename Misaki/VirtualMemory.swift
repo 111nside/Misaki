@@ -21,13 +21,13 @@ struct MemoryPermissions: OptionSet, Equatable {
     static let all: MemoryPermissions = [.read, .write, .execute]
 }
 
-/// Sparse byte-backed guest virtual memory with region-level R/W/X checks.
-/// This is NOT a PS4 MMU, page table, ASLR implementation or physical RAM model.
+/// Sparse, byte-backed guest virtual memory with region-level R/W/X checks.
+/// This is not a PS4 MMU, a page table model, ASLR, or physical RAM emulation.
 struct VirtualMemory {
     private struct Region {
         let start: UInt64
-        let end: UInt64   // exclusive
-        let permissions: MemoryPermissions
+        let end: UInt64  // exclusive
+        var permissions: MemoryPermissions
     }
 
     private var bytes: [UInt64: UInt8] = [:]
@@ -49,10 +49,41 @@ struct VirtualMemory {
         regions.append(Region(start: address, end: end, permissions: permissions))
     }
 
-    /// Legacy helper for raw test programs. ELF segments use map(_:at:permissions:).
+    /// Creates a bounded zero-filled mapping. Large allocations remain deliberately unsupported.
+    mutating func mapZeroed(at address: UInt64, size: Int,
+                           permissions: MemoryPermissions) throws {
+        guard size > 0, size <= 8 * 1024 * 1024 else {
+            throw EmulatorError.invalidMemoryMapping
+        }
+        try map([UInt8](repeating: 0, count: size), at: address, permissions: permissions)
+    }
+
+    /// Change permissions of one *entire* mapping (partial-region changes are not modeled yet).
+    mutating func protect(at address: UInt64, size: Int,
+                          permissions: MemoryPermissions) throws {
+        guard size > 0, address <= UInt64.max - UInt64(size) else {
+            throw EmulatorError.invalidMemoryMapping
+        }
+        guard let index = regions.firstIndex(where: {
+            $0.start == address && $0.end == address + UInt64(size)
+        }) else { throw EmulatorError.invalidMemoryMapping }
+        regions[index].permissions = permissions
+    }
+
+    /// Release one complete mapping; partial unmaps are deliberately rejected.
+    mutating func unmap(at address: UInt64, size: Int) throws {
+        guard size > 0, address <= UInt64.max - UInt64(size) else {
+            throw EmulatorError.invalidMemoryMapping
+        }
+        guard let index = regions.firstIndex(where: {
+            $0.start == address && $0.end == address + UInt64(size)
+        }) else { throw EmulatorError.invalidMemoryMapping }
+        for a in address..<(address + UInt64(size)) { bytes.removeValue(forKey: a) }
+        regions.remove(at: index)
+    }
+
+    /// Legacy helper for raw test programs (maps them with all permissions).
     mutating func load(_ data: [UInt8], at address: UInt64) {
-        // Existing callers use a fresh memory instance and a small, fixed address.
-        // Treat invalid/overlapping test mappings as a failed mapping, never wrap addresses.
         try? map(data, at: address, permissions: .all)
     }
 
@@ -67,31 +98,21 @@ struct VirtualMemory {
         return byte
     }
 
-    func read8(_ address: UInt64) throws -> UInt8 {
-        try checked(address, for: .read)
-    }
-
-    func fetch8(_ address: UInt64) throws -> UInt8 {
-        try checked(address, for: .execute)
-    }
+    func read8(_ address: UInt64) throws -> UInt8 { try checked(address, for: .read) }
+    func fetch8(_ address: UInt64) throws -> UInt8 { try checked(address, for: .execute) }
 
     mutating func write8(_ address: UInt64, value: UInt8) throws {
         _ = try checked(address, for: .write)
         bytes[address] = value
     }
 
-    /// Validate the whole write before changing any byte (atomic with respect
-    /// to guest protection faults; the interpreter itself is single-threaded).
+    /// Pre-validates the complete write, so protection faults never partially write data.
     mutating func writeBytes(_ address: UInt64, values: [UInt8]) throws {
         guard !values.isEmpty, address <= UInt64.max - UInt64(values.count - 1) else {
             throw EmulatorError.invalidMemoryMapping
         }
-        for i in values.indices {
-            _ = try checked(address + UInt64(i), for: .write)
-        }
-        for i in values.indices {
-            bytes[address + UInt64(i)] = values[i]
-        }
+        for i in values.indices { _ = try checked(address + UInt64(i), for: .write) }
+        for i in values.indices { bytes[address + UInt64(i)] = values[i] }
     }
 
     func read64(_ address: UInt64) throws -> UInt64 {
@@ -103,7 +124,6 @@ struct VirtualMemory {
 
     mutating func write64(_ address: UInt64, value: UInt64) throws {
         guard address <= UInt64.max - 7 else { throw EmulatorError.invalidMemoryMapping }
-        // Validate the entire write first so an invalid address cannot partially modify memory.
         for i in 0..<8 { _ = try checked(address + UInt64(i), for: .write) }
         for i in 0..<8 {
             bytes[address + UInt64(i)] = UInt8(truncatingIfNeeded: value >> (i * 8))

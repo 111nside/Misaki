@@ -4,7 +4,12 @@ import SwiftUI
 struct MisakiApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            TabView {
+                ContentView()
+                    .tabItem { Label("Emulator", systemImage: "gamecontroller") }
+                Milestone7View()
+                    .tabItem { Label("Linker", systemImage: "link") }
+            }
         }
     }
 }
