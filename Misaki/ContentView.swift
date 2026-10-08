@@ -9,6 +9,7 @@ struct ContentView: View {
     @State private var errorMessage: String?
     @State private var diagnosticResult: String?
     @State private var demoKernelResult: String?
+    @State private var stackResult: String?
 
     var body: some View {
         NavigationStack {
@@ -61,6 +62,20 @@ struct ContentView: View {
                             .textSelection(.enabled)
                     }
                 }
+                Section("Stack and function-call diagnostic") {
+                    Button {
+                        runStackDemo()
+                    } label: {
+                        Label("Execute CALL/RET ELF test", systemImage: "arrow.uturn.backward.circle")
+                    }
+                    Text("Runs a self-authored x86-64 function-call test. This does not boot PS4 system software.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                    if let stackResult {
+                        Text(stackResult)
+                            .font(.system(.footnote, design: .monospaced))
+                            .textSelection(.enabled)
+                    }
+                }
                 Section("Import executable") {
                     Button {
                         showingImporter = true
@@ -86,7 +101,8 @@ struct ContentView: View {
                 }
                 Section("Emulation status") {
                     Label("Basic ELF64 loading: prototype", systemImage: "doc")
-                    Label("x86-64 interpreter: limited instruction subset", systemImage: "cpu")
+                    Label("x86-64 interpreter: stack, CALL/RET prototype", systemImage: "cpu")
+                    Label("Guest memory: basic read/write/execute checks", systemImage: "memorychip")
                     Label("Demo syscalls: available; PS4 syscalls: not implemented", systemImage: "gearshape")
                     Label("PS4 GPU translation: not implemented", systemImage: "display")
                     Label("Genuine PS4 home menu: not bootable", systemImage: "lock")
@@ -129,6 +145,19 @@ struct ContentView: View {
             demoKernelResult = "Output: \(cpu.consoleOutput.trimmingCharacters(in: .newlines))\nExit code: \(cpu.exitCode.map(String.init) ?? "none")\nInstructions: \(cpu.executedInstructions)"
         } catch {
             demoKernelResult = "Demo failed: \(error.localizedDescription)"
+        }
+    }
+
+    private func runStackDemo() {
+        do {
+            var cpu = X86Interpreter()
+            try cpu.loadELF(DemoStackELF.make())
+            let initialSP = cpu.rsp
+            try cpu.run(maxSteps: 20)
+            let passed = cpu.isHalted && cpu.rax == 8 && cpu.rcx == 5 && cpu.rsp == initialSP
+            stackResult = "CALL/RET test: \(passed ? "PASS" : "FAIL")\nRAX=\(cpu.rax), RCX=\(cpu.rcx)\nStack restored: \(cpu.rsp == initialSP)"
+        } catch {
+            stackResult = "CALL/RET test failed: \(error.localizedDescription)"
         }
     }
 

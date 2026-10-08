@@ -98,7 +98,12 @@ enum ELFLoader {
             let limit = start + Int(fileSize)
             var segment = Array(bytes[start..<limit])
             segment.append(contentsOf: repeatElement(UInt8(0), count: Int(memorySize - fileSize)))
-            memory.load(segment, at: virtualAddress)
+            let flags = read32(offset + 4) // ELF PF_R=4, PF_W=2, PF_X=1
+            var permissions: MemoryPermissions = []
+            if flags & 4 != 0 { permissions.insert(.read) }
+            if flags & 2 != 0 { permissions.insert(.write) }
+            if flags & 1 != 0 { permissions.insert(.execute) }
+            try memory.map(segment, at: virtualAddress, permissions: permissions)
             loadedSegments += 1
         }
         guard loadedSegments > 0 else { throw ELFLoadError.noLoadableSegments }
