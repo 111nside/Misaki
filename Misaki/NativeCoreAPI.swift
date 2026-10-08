@@ -48,3 +48,44 @@ enum NativeCoreAPI {
         return (code, type, segments)
     }
 }
+
+
+/// The C++ guest CPU's synthetic ELF and linked-library execution result.
+/// Does not report PS4 firmware, kernel, or game compatibility.
+struct NativeCPUExecutionSnapshot {
+    let status: Int32
+    let abiVersion: UInt32
+    let loadedSegments: UInt32
+    let imports: UInt32
+    let instructions: UInt32
+    let halted: Bool
+    let stackRestored: Bool
+    let importReadOnly: Bool
+    let rax: UInt64
+    let linkedAddress: UInt64
+
+    var passed: Bool {
+        status == 0 && abiVersion == 1 && loadedSegments == 2 && imports == 1 &&
+        instructions == 5 && halted && stackRestored && importReadOnly &&
+        rax == 42 && linkedAddress == 0x3000
+    }
+}
+
+extension NativeCoreAPI {
+    static func runCPUExecutionDiagnostic() -> NativeCPUExecutionSnapshot {
+        var report = MisakiNativeCPUReport()
+        let status = misaki_core_run_cpu_diagnostic(&report)
+        return NativeCPUExecutionSnapshot(
+            status: status,
+            abiVersion: report.abi_version,
+            loadedSegments: report.loaded_segments,
+            imports: report.resolved_imports,
+            instructions: report.instructions,
+            halted: report.halted == 1,
+            stackRestored: report.stack_restored == 1,
+            importReadOnly: report.import_read_only == 1,
+            rax: report.rax,
+            linkedAddress: report.linked_address
+        )
+    }
+}

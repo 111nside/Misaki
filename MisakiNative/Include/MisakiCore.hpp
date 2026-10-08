@@ -36,6 +36,8 @@ public:
     bool map(std::uint64_t start, std::size_t length, std::uint8_t flags);
     bool protect(std::uint64_t start, std::size_t length, std::uint8_t flags);
     std::optional<std::uint8_t> read8(std::uint64_t address) const;
+    std::optional<std::uint8_t> fetch8(std::uint64_t address) const;
+    bool writeBytes(std::uint64_t address, const std::uint8_t *source, std::size_t length);
     std::optional<std::uint64_t> read64(std::uint64_t address) const;
     bool write64(std::uint64_t address, std::uint64_t value);
     bool isExecutable(std::uint64_t address) const;

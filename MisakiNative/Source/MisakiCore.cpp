@@ -135,6 +135,28 @@ std::optional<std::uint8_t> GuestMemory::read8(std::uint64_t address) const {
     return region->bytes[static_cast<std::size_t>(address - begin)];
 }
 
+std::optional<std::uint8_t> GuestMemory::fetch8(std::uint64_t address) const {
+    auto *region = find(address, permission::execute);
+    if (!region) return std::nullopt;
+    const auto start = std::prev(regions_.upper_bound(address))->first;
+    return region->bytes[static_cast<std::size_t>(address - start)];
+}
+
+bool GuestMemory::writeBytes(std::uint64_t address, const std::uint8_t *source,
+                            std::size_t length) {
+    if ((!source && length != 0) || length > maxMapping ||
+        (length != 0 && address > std::numeric_limits<std::uint64_t>::max() - (length - 1)))
+        return false;
+    for (std::size_t i = 0; i < length; ++i)
+        if (!findWritable(address + i)) return false;
+    for (std::size_t i = 0; i < length; ++i) {
+        auto *region = findWritable(address + i);
+        const auto start = std::prev(regions_.upper_bound(address + i))->first;
+        region->bytes[static_cast<std::size_t>(address + i - start)] = source[i];
+    }
+    return true;
+}
+
 std::optional<std::uint64_t> GuestMemory::read64(std::uint64_t address) const {
     if (address > std::numeric_limits<std::uint64_t>::max() - 7) return std::nullopt;
     std::uint64_t result = 0;

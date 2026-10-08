@@ -1,9 +1,35 @@
 #include "../Include/MisakiCoreBridge.h"
 #include "../Include/MisakiCore.hpp"
+#include "../Include/GuestCPU.hpp"
 
 extern "C" {
 
-const char *misaki_core_version(void) { return "0.9.0-native-prototype"; }
+int32_t misaki_core_run_cpu_diagnostic(MisakiNativeCPUReport *report) {
+    if (!report) return -1;
+    *report = MisakiNativeCPUReport{};
+    try {
+        const auto diagnostic = misaki::runGuestCPUDiagnostic();
+        if (!diagnostic) return -2;
+        report->abi_version = 1;
+        report->loaded_segments = diagnostic->segments;
+        report->resolved_imports = diagnostic->imports;
+        report->instructions = diagnostic->cpu.instructions;
+        report->halted = diagnostic->cpu.stop == misaki::GuestStop::halted ? 1u : 0u;
+        report->stack_restored = diagnostic->cpu.stackRestored ? 1u : 0u;
+        report->import_read_only = diagnostic->importReadOnly ? 1u : 0u;
+        report->rax = diagnostic->cpu.rax;
+        report->linked_address = diagnostic->linkedAddress;
+        const bool passed = report->halted && report->rax == 42 &&
+                            report->instructions == 5 && report->stack_restored &&
+                            report->loaded_segments == 2 && report->resolved_imports == 1 &&
+                            report->linked_address == 0x3000 && report->import_read_only;
+        return passed ? 0 : -3;
+    } catch (...) {
+        return -4;
+    }
+}
+
+const char *misaki_core_version(void) { return "0.10.0-native-execution"; }
 
 int32_t misaki_core_run_diagnostic(MisakiCoreReport *report) {
     if (!report) return -1;
