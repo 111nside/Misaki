@@ -1,0 +1,31 @@
+name: Misaki
+options:
+  bundleIdPrefix: dev.misaki
+settings:
+  base:
+    SWIFT_VERSION: 5.9
+    IPHONEOS_DEPLOYMENT_TARGET: '17.0'
+targets:
+  Misaki:
+    type: application
+    platform: iOS
+    sources:
+      - path: Misaki
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.misaki.app
+        TARGETED_DEVICE_FAMILY: '1,2'
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Misaki
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+    scheme:
+      testTargets:
+        - MisakiTests
+  MisakiTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: MisakiTests
+    dependencies:
+      - target: Misaki
