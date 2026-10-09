@@ -11,7 +11,7 @@ namespace misaki {
 // Non-JIT, deliberately restricted x86-64 interpreter used as a portable
 // execution backend. It does not run PS4 kernel code, SELF, or games.
 enum class X64Stop : std::uint8_t {
-    halted, invalidOpcode, memoryFault, stackFault, stepLimit
+    halted, invalidOpcode, memoryFault, stackFault, stepLimit, yielded, exited, unsupportedSyscall
 };
 
 struct X64State {
@@ -42,9 +42,23 @@ public:
     virtual X64ExecutionResult run(std::uint32_t maxInstructions) = 0;
 };
 
+// The service ABI is injectable; guest code never calls the iPhone OS directly.
+enum class GuestServiceAction : std::uint8_t {
+    resume, yield, exit, memoryFault, unsupported
+};
+
+class IGuestServiceDispatcher {
+public:
+    virtual ~IGuestServiceDispatcher() = default;
+    virtual GuestServiceAction dispatch(GuestMemory &memory, X64State &state,
+                                        std::uint32_t threadID) = 0;
+};
+
 class PortableX64Backend final : public IX64ExecutionBackend {
 public:
-    explicit PortableX64Backend(GuestMemory memory, std::uint64_t entry);
+    explicit PortableX64Backend(GuestMemory memory, std::uint64_t entry,
+                                IGuestServiceDispatcher *services = nullptr,
+                                std::uint32_t threadID = 1);
     X64ExecutionResult run(std::uint32_t maxInstructions = 1000) override;
 
 private:
@@ -60,6 +74,8 @@ private:
     };
 
     GuestMemory memory_;
+    IGuestServiceDispatcher *services_ = nullptr; // owned by enclosing scheduler
+    std::uint32_t threadID_ = 1;
     X64State cpu_;
     bool stackReady_ = false;
     bool terminated_ = false;

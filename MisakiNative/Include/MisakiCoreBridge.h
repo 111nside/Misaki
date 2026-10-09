@@ -73,6 +73,25 @@ typedef struct MisakiDynamicCPUReport {
 
 int32_t misaki_core_run_dynamic_cpu_diagnostic(MisakiDynamicCPUReport *report);
 
+// Milestone 13: original toy services + deterministic cooperative guest scheduler.
+// These are NOT Sony, FreeBSD, or Darwin system calls.
+typedef struct MisakiServiceThreadReport {
+    uint32_t abi_version;
+    uint32_t thread_count;
+    uint32_t instructions;
+    uint32_t yields;
+    uint32_t service_calls;
+    uint32_t write_calls;
+    uint32_t output_bytes;
+    uint32_t output_matches;
+    uint32_t threads_halted;
+    uint32_t stacks_restored;
+    uint64_t thread1_rax;
+    uint64_t thread2_rax;
+} MisakiServiceThreadReport;
+
+int32_t misaki_core_run_services_diagnostic(MisakiServiceThreadReport *report);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

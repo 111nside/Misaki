@@ -30,6 +30,23 @@ final class NativeCoreBridgeTests: XCTestCase {
         XCTAssertEqual(result.linkedAddress, 0x3000)
     }
 
+    func testCooperativeGuestServicesFromSwift() {
+        let result = NativeCoreAPI.runGuestServicesDiagnostic()
+        XCTAssertTrue(result.passed)
+        XCTAssertEqual(result.status, 0)
+        XCTAssertEqual(result.threads, 2)
+        XCTAssertEqual(result.instructions, 30)
+        XCTAssertEqual(result.yields, 2)
+        XCTAssertEqual(result.serviceCalls, 8)
+        XCTAssertEqual(result.writeCalls, 2)
+        XCTAssertEqual(result.outputBytes, 4)
+        XCTAssertTrue(result.outputMatches)
+        XCTAssertTrue(result.threadsHalted)
+        XCTAssertTrue(result.stacksRestored)
+        XCTAssertEqual(result.firstThreadRAX, 4097)
+        XCTAssertEqual(result.secondThreadRAX, 4098)
+    }
+
     func testNativeCoreRejectsInvalidFile() {
         let result = NativeCoreAPI.inspectELF([0, 1, 2, 3])
         XCTAssertEqual(result.code, -2)

@@ -178,3 +178,52 @@ extension NativeCoreAPI {
         )
     }
 }
+
+
+/// Milestone 13: native toy guest services plus deterministic cooperative
+/// scheduling of separately loaded ELF64 test programs. NOT PS4 threads.
+struct NativeGuestServicesSnapshot {
+    let status: Int32
+    let abiVersion: UInt32
+    let threads: UInt32
+    let instructions: UInt32
+    let yields: UInt32
+    let serviceCalls: UInt32
+    let writeCalls: UInt32
+    let outputBytes: UInt32
+    let outputMatches: Bool
+    let threadsHalted: Bool
+    let stacksRestored: Bool
+    let firstThreadRAX: UInt64
+    let secondThreadRAX: UInt64
+
+    var passed: Bool {
+        status == 0 && abiVersion == 1 && threads == 2 &&
+        instructions == 30 && yields == 2 && serviceCalls == 8 &&
+        writeCalls == 2 && outputBytes == 4 && outputMatches &&
+        threadsHalted && stacksRestored &&
+        firstThreadRAX == 4097 && secondThreadRAX == 4098
+    }
+}
+
+extension NativeCoreAPI {
+    static func runGuestServicesDiagnostic() -> NativeGuestServicesSnapshot {
+        var report = MisakiServiceThreadReport()
+        let status = misaki_core_run_services_diagnostic(&report)
+        return NativeGuestServicesSnapshot(
+            status: status,
+            abiVersion: report.abi_version,
+            threads: report.thread_count,
+            instructions: report.instructions,
+            yields: report.yields,
+            serviceCalls: report.service_calls,
+            writeCalls: report.write_calls,
+            outputBytes: report.output_bytes,
+            outputMatches: report.output_matches == 1,
+            threadsHalted: report.threads_halted == 1,
+            stacksRestored: report.stacks_restored == 1,
+            firstThreadRAX: report.thread1_rax,
+            secondThreadRAX: report.thread2_rax
+        )
+    }
+}

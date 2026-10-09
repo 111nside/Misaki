@@ -2,9 +2,44 @@
 #include "../Include/MisakiCore.hpp"
 #include "../Include/GuestCPU.hpp"
 #include "../Include/GuestDynamicExecution.hpp"
+#include "../Include/GuestServices.hpp"
 #include "../Include/GuestX64Backend.hpp"
 
 extern "C" {
+
+int32_t misaki_core_run_services_diagnostic(MisakiServiceThreadReport *report) {
+    if (!report) return -1;
+    *report = MisakiServiceThreadReport{};
+    try {
+        const auto run = misaki::runGuestServiceDiagnostic();
+        if (!run || run->scheduler.threadResults.size() != 2) return -2;
+        const auto &a = run->scheduler.threadResults[0];
+        const auto &b = run->scheduler.threadResults[1];
+        report->abi_version = 1;
+        report->thread_count = 2;
+        report->instructions = run->scheduler.instructions;
+        report->yields = run->scheduler.yieldEvents;
+        report->service_calls = run->calls;
+        report->write_calls = run->writes;
+        report->output_bytes = static_cast<uint32_t>(run->output.size());
+        report->output_matches = run->output == "OKOK" ? 1u : 0u;
+        report->threads_halted = a.stop == misaki::X64Stop::halted &&
+                                 b.stop == misaki::X64Stop::halted ? 1u : 0u;
+        report->stacks_restored = a.stackRestored() && b.stackRestored() ? 1u : 0u;
+        report->thread1_rax = a.rax();
+        report->thread2_rax = b.rax();
+        const bool passed = run->scheduler.completed &&
+                            report->instructions == 30 && report->yields == 2 &&
+                            report->service_calls == 8 && report->write_calls == 2 &&
+                            report->output_bytes == 4 && report->output_matches == 1 &&
+                            report->threads_halted && report->stacks_restored &&
+                            a.rax() == 4097 && b.rax() == 4098;
+        return passed ? 0 : -3;
+    } catch (...) {
+        return -4;
+    }
+}
+
 
 int32_t misaki_core_run_dynamic_cpu_diagnostic(MisakiDynamicCPUReport *report) {
     if (!report) return -1;
@@ -90,7 +125,7 @@ int32_t misaki_core_run_cpu_diagnostic(MisakiNativeCPUReport *report) {
     }
 }
 
-const char *misaki_core_version(void) { return "0.11.0-portable-backend"; }
+const char *misaki_core_version(void) { return "0.13.0-services-and-threads"; }
 
 int32_t misaki_core_run_diagnostic(MisakiCoreReport *report) {
     if (!report) return -1;

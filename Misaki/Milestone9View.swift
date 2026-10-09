@@ -7,6 +7,7 @@ struct Milestone9View: View {
     @State private var executionText: String?
     @State private var backendText: String?
     @State private var dynamicText: String?
+    @State private var serviceText: String?
 
     var body: some View {
         NavigationStack {
@@ -69,16 +70,32 @@ struct Milestone9View: View {
                             .textSelection(.enabled)
                     }
                 }
+                Section("Milestone 13 · Native guest services") {
+                    Button {
+                        runGuestServices()
+                    } label: {
+                        Label("Execute guest services and threads", systemImage: "person.2.wave.2")
+                    }
+                    Text("Runs two independently loaded ELF64 guest programs on the C++ CPU. A bounded round-robin scheduler handles synthetic page-size, output, thread-ID, and yield services. This is not Sony's kernel or native iOS threading.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    if let serviceText {
+                        Text(serviceText)
+                            .font(.system(.footnote, design: .monospaced))
+                            .textSelection(.enabled)
+                    }
+                }
                 Section("Native engine") {
                     Label("C++17 core with C / Swift bridge", systemImage: "checkmark.circle")
                     Label("Modular instruction execution interface", systemImage: "checkmark.circle")
                     Label("Integer, register, memory and branch subset", systemImage: "checkmark.circle")
                     Label("Native regression suite (CMake / CTest)", systemImage: "checkmark.circle")
                     Label("Native ET_DYN linker with automatic import resolution", systemImage: "checkmark.circle")
+                    Label("Bounded guest service dispatcher and cooperative scheduling", systemImage: "checkmark.circle")
                 }
                 Section("Not yet implemented") {
                     Label("Full x86-64, SSE/AVX and optimized ARM64 translation", systemImage: "xmark.circle")
-                    Label("PS4 operating system and firmware", systemImage: "xmark.circle")
+                    Label("PS4 operating system, real threads and firmware", systemImage: "xmark.circle")
                     Label("PS4 GCN-to-Metal graphics", systemImage: "xmark.circle")
                     Text("Passing a native CPU diagnostic does not mean PS4 firmware can boot.")
                         .font(.footnote)
@@ -87,6 +104,11 @@ struct Milestone9View: View {
             }
             .navigationTitle("Native core")
         }
+    }
+
+    private func runGuestServices() {
+        let result = NativeCoreAPI.runGuestServicesDiagnostic()
+        serviceText = "Guest services and threads: \(result.passed ? "PASS" : "FAIL")\nThreads=\(result.threads)\nInstructions=\(result.instructions)\nService calls=\(result.serviceCalls)\nYield events=\(result.yields)\nGuest writes=\(result.writeCalls)\nOutput=\(result.outputMatches ? "OKOK" : "unexpected")\nRAX1=\(result.firstThreadRAX), RAX2=\(result.secondThreadRAX)\nStacks restored=\(result.stacksRestored)\nStatus=\(result.status)"
     }
 
     private func runDynamicModule() {

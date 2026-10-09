@@ -26,8 +26,10 @@ std::uint64_t magnitude(std::int64_t number) {
 }
 }
 
-PortableX64Backend::PortableX64Backend(GuestMemory memory, std::uint64_t entry)
-    : memory_(std::move(memory)) {
+PortableX64Backend::PortableX64Backend(GuestMemory memory, std::uint64_t entry,
+                                       IGuestServiceDispatcher *services,
+                                       std::uint32_t threadID)
+    : memory_(std::move(memory)), services_(services), threadID_(threadID) {
     cpu_.rip = entry;
     cpu_.initialStack = stackBase + stackSize;
     cpu_.registers[4] = cpu_.initialStack;
@@ -263,6 +265,16 @@ std::optional<X64Stop> PortableX64Backend::step() {
     if (opcode == 0x0f) {
         std::uint8_t second = 0;
         if (!fetch8(second)) return X64Stop::memoryFault;
+        if (rex == 0 && second == 0x05) { // SYSCALL: synthetic guest ABI only
+            if (!services_) return X64Stop::unsupportedSyscall;
+            switch (services_->dispatch(memory_, cpu_, threadID_)) {
+            case GuestServiceAction::resume: return std::nullopt;
+            case GuestServiceAction::yield: return X64Stop::yielded;
+            case GuestServiceAction::exit: return X64Stop::exited;
+            case GuestServiceAction::memoryFault: return X64Stop::memoryFault;
+            case GuestServiceAction::unsupported: return X64Stop::unsupportedSyscall;
+            }
+        }
         if (rex == 0 && second >= 0x80 && second <= 0x8f) {
             std::uint32_t displacement = 0;
             if (!fetch32(displacement)) return X64Stop::memoryFault;
@@ -397,8 +409,12 @@ X64ExecutionResult PortableX64Backend::run(std::uint32_t maxInstructions) {
     for (std::uint32_t i = 0; i < maxInstructions; ++i) {
         const auto stop = step();
         if (stop) {
-            if (*stop == X64Stop::halted) ++cpu_.instructions;
-            if (*stop != X64Stop::stepLimit) { terminated_ = true; lastStop_ = *stop; }
+            if (*stop == X64Stop::halted || *stop == X64Stop::yielded ||
+                *stop == X64Stop::exited) ++cpu_.instructions;
+            if (*stop != X64Stop::stepLimit && *stop != X64Stop::yielded) {
+                terminated_ = true;
+                lastStop_ = *stop;
+            }
             return result(*stop);
         }
         ++cpu_.instructions;
