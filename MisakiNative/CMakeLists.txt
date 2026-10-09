@@ -10,6 +10,7 @@ add_library(misaki_native STATIC
     Source/GuestX64Backend.cpp
     Source/GuestDynamicExecution.cpp
     Source/GuestServices.cpp
+    Source/GuestProcesses.cpp
     Source/MisakiCoreBridge.cpp
 )
 target_include_directories(misaki_native PUBLIC Include)
@@ -31,6 +32,10 @@ if (BUILD_TESTING)
     add_executable(misaki_guest_service_tests Tests/GuestServicesTests.cpp)
     target_link_libraries(misaki_guest_service_tests PRIVATE misaki_native)
     add_test(NAME native-guest-services-tests COMMAND misaki_guest_service_tests)
+
+    add_executable(misaki_guest_process_tests Tests/GuestProcessesTests.cpp)
+    target_link_libraries(misaki_guest_process_tests PRIVATE misaki_native)
+    add_test(NAME native-guest-process-tests COMMAND misaki_guest_process_tests)
 
     add_executable(misaki_x64_backend_tests Tests/GuestX64BackendTests.cpp)
     target_link_libraries(misaki_x64_backend_tests PRIVATE misaki_native)

@@ -47,6 +47,25 @@ final class NativeCoreBridgeTests: XCTestCase {
         XCTAssertEqual(result.secondThreadRAX, 4098)
     }
 
+    func testNativeGuestVirtualFilesystemAndProcesses() {
+        let result = NativeCoreAPI.runProcessDiagnostic()
+        XCTAssertTrue(result.passed)
+        XCTAssertEqual(result.status, 0)
+        XCTAssertEqual(result.abiVersion, 1)
+        XCTAssertEqual(result.processes, 2)
+        XCTAssertEqual(result.instructions, 44)
+        XCTAssertEqual(result.yields, 2)
+        XCTAssertEqual(result.opens, 2)
+        XCTAssertEqual(result.reads, 2)
+        XCTAssertEqual(result.closes, 2)
+        XCTAssertEqual(result.writes, 2)
+        XCTAssertEqual(result.outputBytes, 10)
+        XCTAssertTrue(result.outputMatches)
+        XCTAssertTrue(result.stacksRestored)
+        XCTAssertEqual(result.pid1, 1001)
+        XCTAssertEqual(result.pid2, 1002)
+    }
+
     func testNativeCoreRejectsInvalidFile() {
         let result = NativeCoreAPI.inspectELF([0, 1, 2, 3])
         XCTAssertEqual(result.code, -2)

@@ -227,3 +227,52 @@ extension NativeCoreAPI {
         )
     }
 }
+
+/// Milestone 14: sandboxed, in-memory file services + independent guest PIDs.
+/// This is not the PS4 process manager or the iPhone's filesystem.
+struct NativeGuestProcessSnapshot {
+    let status: Int32
+    let abiVersion: UInt32
+    let processes: UInt32
+    let instructions: UInt32
+    let yields: UInt32
+    let opens: UInt32
+    let reads: UInt32
+    let closes: UInt32
+    let writes: UInt32
+    let outputBytes: UInt32
+    let outputMatches: Bool
+    let stacksRestored: Bool
+    let pid1: UInt64
+    let pid2: UInt64
+
+    var passed: Bool {
+        status == 0 && abiVersion == 1 && processes == 2 &&
+        instructions == 44 && yields == 2 && opens == 2 && reads == 2 &&
+        closes == 2 && writes == 2 && outputBytes == 10 &&
+        outputMatches && stacksRestored && pid1 == 1001 && pid2 == 1002
+    }
+}
+
+extension NativeCoreAPI {
+    static func runProcessDiagnostic() -> NativeGuestProcessSnapshot {
+        var report = MisakiProcessReport()
+        let status = misaki_core_run_process_diagnostic(&report)
+        return NativeGuestProcessSnapshot(
+            status: status,
+            abiVersion: report.abi_version,
+            processes: report.process_count,
+            instructions: report.instructions,
+            yields: report.yields,
+            opens: report.opens,
+            reads: report.reads,
+            closes: report.closes,
+            writes: report.writes,
+            outputBytes: report.output_bytes,
+            outputMatches: report.output_matches == 1,
+            stacksRestored: report.stacks_restored == 1,
+            pid1: report.pid1_rax,
+            pid2: report.pid2_rax
+        )
+    }
+}

@@ -8,6 +8,7 @@ struct Milestone9View: View {
     @State private var backendText: String?
     @State private var dynamicText: String?
     @State private var serviceText: String?
+    @State private var processText: String?
 
     var body: some View {
         NavigationStack {
@@ -85,6 +86,21 @@ struct Milestone9View: View {
                             .textSelection(.enabled)
                     }
                 }
+                Section("Milestone 14 · Guest processes and files") {
+                    Button {
+                        runProcessDiagnostic()
+                    } label: {
+                        Label("Execute virtual filesystem and processes", systemImage: "folder.fill")
+                    }
+                    Text("Two isolated guest ELF programs open a read-only in-memory file, read five bytes into separate guest address spaces, yield, close their own descriptors, and obtain separate guest PIDs. No access to the iPhone filesystem or Sony software.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    if let processText {
+                        Text(processText)
+                            .font(.system(.footnote, design: .monospaced))
+                            .textSelection(.enabled)
+                    }
+                }
                 Section("Native engine") {
                     Label("C++17 core with C / Swift bridge", systemImage: "checkmark.circle")
                     Label("Modular instruction execution interface", systemImage: "checkmark.circle")
@@ -92,6 +108,7 @@ struct Milestone9View: View {
                     Label("Native regression suite (CMake / CTest)", systemImage: "checkmark.circle")
                     Label("Native ET_DYN linker with automatic import resolution", systemImage: "checkmark.circle")
                     Label("Bounded guest service dispatcher and cooperative scheduling", systemImage: "checkmark.circle")
+                    Label("Isolated guest PIDs and read-only virtual filesystem", systemImage: "checkmark.circle")
                 }
                 Section("Not yet implemented") {
                     Label("Full x86-64, SSE/AVX and optimized ARM64 translation", systemImage: "xmark.circle")
@@ -104,6 +121,11 @@ struct Milestone9View: View {
             }
             .navigationTitle("Native core")
         }
+    }
+
+    private func runProcessDiagnostic() {
+        let result = NativeCoreAPI.runProcessDiagnostic()
+        processText = "Guest VFS and processes: \(result.passed ? "PASS" : "FAIL")\nProcesses=\(result.processes)\nInstructions=\(result.instructions)\nOpen/Read/Close=\(result.opens)/\(result.reads)/\(result.closes)\nYield events=\(result.yields)\nGuest output=\(result.outputMatches ? "HelloHello" : "unexpected")\nPID1=\(result.pid1), PID2=\(result.pid2)\nStacks restored=\(result.stacksRestored)\nStatus=\(result.status)"
     }
 
     private func runGuestServices() {

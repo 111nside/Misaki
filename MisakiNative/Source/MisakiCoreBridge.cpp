@@ -3,9 +3,46 @@
 #include "../Include/GuestCPU.hpp"
 #include "../Include/GuestDynamicExecution.hpp"
 #include "../Include/GuestServices.hpp"
+#include "../Include/GuestProcesses.hpp"
 #include "../Include/GuestX64Backend.hpp"
 
 extern "C" {
+int32_t misaki_core_run_process_diagnostic(MisakiProcessReport *report) {
+    if (!report) return -1;
+    *report = MisakiProcessReport{};
+    try {
+        const auto run = misaki::runGuestProcessDiagnostic();
+        if (!run || run->results.size() != 2) return -2;
+        const auto &a = run->results[0];
+        const auto &b = run->results[1];
+        report->abi_version = 1;
+        report->process_count = 2;
+        report->instructions = run->instructions;
+        report->yields = run->yields;
+        report->opens = run->opens;
+        report->reads = run->reads;
+        report->closes = run->closes;
+        report->writes = run->writes;
+        report->output_bytes = static_cast<uint32_t>(run->output.size());
+        report->output_matches = run->output == "HelloHello" ? 1u : 0u;
+        report->stacks_restored = a.stackRestored() && b.stackRestored() ? 1u : 0u;
+        report->pid1_rax = a.rax();
+        report->pid2_rax = b.rax();
+        const bool passed = run->completed && run->pids.size() == 2 &&
+                            a.stop == misaki::X64Stop::halted &&
+                            b.stop == misaki::X64Stop::halted &&
+                            report->instructions == 44 && report->yields == 2 &&
+                            report->opens == 2 && report->reads == 2 &&
+                            report->closes == 2 && report->writes == 2 &&
+                            report->output_bytes == 10 && report->output_matches == 1 &&
+                            report->stacks_restored == 1 &&
+                            report->pid1_rax == 1001 && report->pid2_rax == 1002;
+        return passed ? 0 : -3;
+    } catch (...) {
+        return -4;
+    }
+}
+
 
 int32_t misaki_core_run_services_diagnostic(MisakiServiceThreadReport *report) {
     if (!report) return -1;
@@ -125,7 +162,7 @@ int32_t misaki_core_run_cpu_diagnostic(MisakiNativeCPUReport *report) {
     }
 }
 
-const char *misaki_core_version(void) { return "0.13.0-services-and-threads"; }
+const char *misaki_core_version(void) { return "0.14.0-guest-processes"; }
 
 int32_t misaki_core_run_diagnostic(MisakiCoreReport *report) {
     if (!report) return -1;

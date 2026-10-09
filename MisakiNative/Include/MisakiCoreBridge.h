@@ -92,6 +92,26 @@ typedef struct MisakiServiceThreadReport {
 
 int32_t misaki_core_run_services_diagnostic(MisakiServiceThreadReport *report);
 
+// Milestone 14: isolated in-memory guest process/VFS test ABI only.
+// No guest file operation reaches the device's host filesystem.
+typedef struct MisakiProcessReport {
+    uint32_t abi_version;
+    uint32_t process_count;
+    uint32_t instructions;
+    uint32_t yields;
+    uint32_t opens;
+    uint32_t reads;
+    uint32_t closes;
+    uint32_t writes;
+    uint32_t output_bytes;
+    uint32_t output_matches;
+    uint32_t stacks_restored;
+    uint64_t pid1_rax;
+    uint64_t pid2_rax;
+} MisakiProcessReport;
+
+int32_t misaki_core_run_process_diagnostic(MisakiProcessReport *report);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
