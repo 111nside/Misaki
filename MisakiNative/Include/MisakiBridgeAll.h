@@ -3,4 +3,5 @@
 // Consolidates stable C ABI declarations without exposing C++ to Swift.
 #include "MisakiCoreBridge.h"
 #include "MisakiModuleLifecycleBridge.h"
+#include "MisakiGPUBridge.h"
 #endif

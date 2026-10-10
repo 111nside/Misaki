@@ -15,6 +15,8 @@ add_library(misaki_native STATIC
     Source/GuestLibraryCatalog.cpp
     Source/GuestModuleLifecycle.cpp
     Source/GuestModuleLifecycleBridge.cpp
+    Source/GuestGPU.cpp
+    Source/GuestGPUBridge.cpp
     Source/MisakiCoreBridge.cpp
 )
 target_include_directories(misaki_native PUBLIC Include)
@@ -50,4 +52,7 @@ if (BUILD_TESTING)
     add_executable(misaki_module_lifecycle_tests Tests/GuestModuleLifecycleTests.cpp)
     target_link_libraries(misaki_module_lifecycle_tests PRIVATE misaki_native)
     add_test(NAME native-module-lifecycle-tests COMMAND misaki_module_lifecycle_tests)
+    add_executable(misaki_guest_gpu_tests Tests/GuestGPUTests.cpp)
+    target_link_libraries(misaki_guest_gpu_tests PRIVATE misaki_native)
+    add_test(NAME native-guest-gpu-tests COMMAND misaki_guest_gpu_tests)
 endif()
