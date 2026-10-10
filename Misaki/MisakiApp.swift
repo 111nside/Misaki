@@ -13,6 +13,8 @@ struct MisakiApp: App {
                     .tabItem { Label("Modules", systemImage: "shippingbox") }
                 Milestone9View()
                     .tabItem { Label("Core", systemImage: "cpu") }
+                Milestone17View()
+                    .tabItem { Label("Lifecycle", systemImage: "square.stack.3d.up") }
             }
         }
     }

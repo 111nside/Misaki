@@ -13,6 +13,8 @@ add_library(misaki_native STATIC
     Source/GuestProcesses.cpp
     Source/GuestSystemLibraries.cpp
     Source/GuestLibraryCatalog.cpp
+    Source/GuestModuleLifecycle.cpp
+    Source/GuestModuleLifecycleBridge.cpp
     Source/MisakiCoreBridge.cpp
 )
 target_include_directories(misaki_native PUBLIC Include)
@@ -30,15 +32,12 @@ if (BUILD_TESTING)
     add_executable(misaki_dynamic_module_tests Tests/GuestDynamicExecutionTests.cpp)
     target_link_libraries(misaki_dynamic_module_tests PRIVATE misaki_native)
     add_test(NAME native-dynamic-module-tests COMMAND misaki_dynamic_module_tests)
-
     add_executable(misaki_guest_service_tests Tests/GuestServicesTests.cpp)
     target_link_libraries(misaki_guest_service_tests PRIVATE misaki_native)
     add_test(NAME native-guest-services-tests COMMAND misaki_guest_service_tests)
-
     add_executable(misaki_guest_process_tests Tests/GuestProcessesTests.cpp)
     target_link_libraries(misaki_guest_process_tests PRIVATE misaki_native)
     add_test(NAME native-guest-process-tests COMMAND misaki_guest_process_tests)
-
     add_executable(misaki_x64_backend_tests Tests/GuestX64BackendTests.cpp)
     target_link_libraries(misaki_x64_backend_tests PRIVATE misaki_native)
     add_test(NAME x64-backend-regression-tests COMMAND misaki_x64_backend_tests)
@@ -48,4 +47,7 @@ if (BUILD_TESTING)
     add_executable(misaki_library_catalog_tests Tests/GuestLibraryCatalogTests.cpp)
     target_link_libraries(misaki_library_catalog_tests PRIVATE misaki_native)
     add_test(NAME native-library-catalog-tests COMMAND misaki_library_catalog_tests)
+    add_executable(misaki_module_lifecycle_tests Tests/GuestModuleLifecycleTests.cpp)
+    target_link_libraries(misaki_module_lifecycle_tests PRIVATE misaki_native)
+    add_test(NAME native-module-lifecycle-tests COMMAND misaki_module_lifecycle_tests)
 endif()
