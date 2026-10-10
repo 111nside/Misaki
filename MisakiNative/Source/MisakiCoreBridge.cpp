@@ -4,9 +4,50 @@
 #include "../Include/GuestDynamicExecution.hpp"
 #include "../Include/GuestServices.hpp"
 #include "../Include/GuestProcesses.hpp"
+#include "../Include/GuestSystemLibraries.hpp"
 #include "../Include/GuestX64Backend.hpp"
 
 extern "C" {
+int32_t misaki_core_run_system_library_diagnostic(MisakiSystemLibraryReport *report) {
+    if (!report) return -1;
+    *report = MisakiSystemLibraryReport{};
+    try {
+        const auto run = misaki::runGuestSystemLibraryDiagnostic();
+        if (!run) return -2;
+        report->abi_version = 1;
+        report->loaded_segments = run->linked.mappedSegments;
+        report->imported_symbols = run->linked.importedSymbols;
+        report->relative_relocations = run->linked.relativeRelocations;
+        report->instructions = run->execution.state.instructions;
+        report->halted = run->execution.stop == misaki::X64Stop::halted ? 1u : 0u;
+        report->stack_restored = run->execution.stackRestored() ? 1u : 0u;
+        report->import_read_only = run->importReadOnly ? 1u : 0u;
+        report->library_read_only = run->libraryReadOnly ? 1u : 0u;
+        report->process_id = run->processID;
+        report->opens = run->opens;
+        report->reads = run->reads;
+        report->closes = run->closes;
+        report->writes = run->writes;
+        report->output_matches = run->output == "Hello" ? 1u : 0u;
+        report->rax = run->execution.rax();
+        report->entry = run->linked.entry;
+        report->linked_address = run->importAddress;
+        const bool passed = report->loaded_segments == 2 &&
+                            report->imported_symbols == 1 &&
+                            report->relative_relocations == 1 &&
+                            report->instructions == 26 && report->halted &&
+                            report->stack_restored && report->import_read_only &&
+                            report->library_read_only && report->process_id == 1001 &&
+                            report->opens == 1 && report->reads == 1 &&
+                            report->closes == 1 && report->writes == 1 &&
+                            report->output_matches && report->rax == 42 &&
+                            report->entry == 0x5000 && report->linked_address == 0x9000;
+        return passed ? 0 : -3;
+    } catch (...) {
+        return -4;
+    }
+}
+
 int32_t misaki_core_run_process_diagnostic(MisakiProcessReport *report) {
     if (!report) return -1;
     *report = MisakiProcessReport{};
@@ -162,7 +203,7 @@ int32_t misaki_core_run_cpu_diagnostic(MisakiNativeCPUReport *report) {
     }
 }
 
-const char *misaki_core_version(void) { return "0.14.0-guest-processes"; }
+const char *misaki_core_version(void) { return "0.15.0-native-library-services"; }
 
 int32_t misaki_core_run_diagnostic(MisakiCoreReport *report) {
     if (!report) return -1;

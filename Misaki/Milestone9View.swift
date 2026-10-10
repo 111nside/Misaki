@@ -9,6 +9,7 @@ struct Milestone9View: View {
     @State private var dynamicText: String?
     @State private var serviceText: String?
     @State private var processText: String?
+    @State private var systemLibraryText: String?
 
     var body: some View {
         NavigationStack {
@@ -101,6 +102,21 @@ struct Milestone9View: View {
                             .textSelection(.enabled)
                     }
                 }
+                Section("Milestone 15 · Integrated userspace library") {
+                    Button {
+                        runSystemLibraryDiagnostic()
+                    } label: {
+                        Label("Execute linked system-service ELF", systemImage: "cpu.fill")
+                    }
+                    Text("An independently authored ET_DYN executable imports a guest library. The C++ CPU executes that library's instructions to open, read, write and close an in-memory file through Misaki's simulated process services. It does not use Sony firmware or real PS4 syscalls.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    if let systemLibraryText {
+                        Text(systemLibraryText)
+                            .font(.system(.footnote, design: .monospaced))
+                            .textSelection(.enabled)
+                    }
+                }
                 Section("Native engine") {
                     Label("C++17 core with C / Swift bridge", systemImage: "checkmark.circle")
                     Label("Modular instruction execution interface", systemImage: "checkmark.circle")
@@ -109,6 +125,7 @@ struct Milestone9View: View {
                     Label("Native ET_DYN linker with automatic import resolution", systemImage: "checkmark.circle")
                     Label("Bounded guest service dispatcher and cooperative scheduling", systemImage: "checkmark.circle")
                     Label("Isolated guest PIDs and read-only virtual filesystem", systemImage: "checkmark.circle")
+                    Label("Integrated ELF -> guest library -> VFS services", systemImage: "checkmark.circle")
                 }
                 Section("Not yet implemented") {
                     Label("Full x86-64, SSE/AVX and optimized ARM64 translation", systemImage: "xmark.circle")
@@ -121,6 +138,11 @@ struct Milestone9View: View {
             }
             .navigationTitle("Native core")
         }
+    }
+
+    private func runSystemLibraryDiagnostic() {
+        let result = NativeCoreAPI.runSystemLibraryDiagnostic()
+        systemLibraryText = "Guest system-library test: \(result.passed ? "PASS" : "FAIL")\nRAX=\(result.rax)\nInstructions=\(result.instructions)\nImports=\(result.imports)\nRelative relocations=\(result.relativeRelocations)\nOpen/Read/Close/Write=\(result.opens)/\(result.reads)/\(result.closes)/\(result.writes)\nGuest output=\(result.outputMatches ? "Hello" : "unexpected")\nPID=\(result.processID)\nStack restored=\(result.stackRestored)\nRead-only import=\(result.importReadOnly)\nStatus=\(result.status)"
     }
 
     private func runProcessDiagnostic() {

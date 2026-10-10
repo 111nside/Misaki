@@ -276,3 +276,66 @@ extension NativeCoreAPI {
         )
     }
 }
+
+
+/// Milestone 15: one integrated ELF64 -> guest library -> process/VFS
+/// diagnostic. The callable routines use Misaki's original toy ABI, not
+/// PS4 system libraries or host iOS services.
+struct NativeSystemLibrarySnapshot {
+    let status: Int32
+    let abiVersion: UInt32
+    let segments: UInt32
+    let imports: UInt32
+    let relativeRelocations: UInt32
+    let instructions: UInt32
+    let halted: Bool
+    let stackRestored: Bool
+    let importReadOnly: Bool
+    let libraryReadOnly: Bool
+    let processID: UInt32
+    let opens: UInt32
+    let reads: UInt32
+    let closes: UInt32
+    let writes: UInt32
+    let outputMatches: Bool
+    let rax: UInt64
+    let entry: UInt64
+    let linkedAddress: UInt64
+
+    var passed: Bool {
+        status == 0 && abiVersion == 1 && segments == 2 &&
+        imports == 1 && relativeRelocations == 1 && instructions == 26 &&
+        halted && stackRestored && importReadOnly && libraryReadOnly &&
+        processID == 1001 && opens == 1 && reads == 1 &&
+        closes == 1 && writes == 1 && outputMatches &&
+        rax == 42 && entry == 0x5000 && linkedAddress == 0x9000
+    }
+}
+
+extension NativeCoreAPI {
+    static func runSystemLibraryDiagnostic() -> NativeSystemLibrarySnapshot {
+        var report = MisakiSystemLibraryReport()
+        let status = misaki_core_run_system_library_diagnostic(&report)
+        return NativeSystemLibrarySnapshot(
+            status: status,
+            abiVersion: report.abi_version,
+            segments: report.loaded_segments,
+            imports: report.imported_symbols,
+            relativeRelocations: report.relative_relocations,
+            instructions: report.instructions,
+            halted: report.halted == 1,
+            stackRestored: report.stack_restored == 1,
+            importReadOnly: report.import_read_only == 1,
+            libraryReadOnly: report.library_read_only == 1,
+            processID: report.process_id,
+            opens: report.opens,
+            reads: report.reads,
+            closes: report.closes,
+            writes: report.writes,
+            outputMatches: report.output_matches == 1,
+            rax: report.rax,
+            entry: report.entry,
+            linkedAddress: report.linked_address
+        )
+    }
+}

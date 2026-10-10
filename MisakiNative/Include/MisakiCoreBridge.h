@@ -112,6 +112,31 @@ typedef struct MisakiProcessReport {
 
 int32_t misaki_core_run_process_diagnostic(MisakiProcessReport *report);
 
+// Milestone 15: self-authored ELF64 module linked to a guest service library.
+// Uses a private demonstration ABI and a read-only, in-memory VFS, not PS4 APIs.
+typedef struct MisakiSystemLibraryReport {
+    uint32_t abi_version;
+    uint32_t loaded_segments;
+    uint32_t imported_symbols;
+    uint32_t relative_relocations;
+    uint32_t instructions;
+    uint32_t halted;
+    uint32_t stack_restored;
+    uint32_t import_read_only;
+    uint32_t library_read_only;
+    uint32_t process_id;
+    uint32_t opens;
+    uint32_t reads;
+    uint32_t closes;
+    uint32_t writes;
+    uint32_t output_matches;
+    uint64_t rax;
+    uint64_t entry;
+    uint64_t linked_address;
+} MisakiSystemLibraryReport;
+
+int32_t misaki_core_run_system_library_diagnostic(MisakiSystemLibraryReport *report);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

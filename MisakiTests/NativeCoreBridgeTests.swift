@@ -66,6 +66,30 @@ final class NativeCoreBridgeTests: XCTestCase {
         XCTAssertEqual(result.pid2, 1002)
     }
 
+    func testNativeIntegratedSystemLibraryAndVFS() {
+        let result = NativeCoreAPI.runSystemLibraryDiagnostic()
+        XCTAssertTrue(result.passed)
+        XCTAssertEqual(result.status, 0)
+        XCTAssertEqual(result.abiVersion, 1)
+        XCTAssertEqual(result.segments, 2)
+        XCTAssertEqual(result.imports, 1)
+        XCTAssertEqual(result.relativeRelocations, 1)
+        XCTAssertEqual(result.instructions, 26)
+        XCTAssertTrue(result.halted)
+        XCTAssertTrue(result.stackRestored)
+        XCTAssertTrue(result.importReadOnly)
+        XCTAssertTrue(result.libraryReadOnly)
+        XCTAssertEqual(result.processID, 1001)
+        XCTAssertEqual(result.opens, 1)
+        XCTAssertEqual(result.reads, 1)
+        XCTAssertEqual(result.closes, 1)
+        XCTAssertEqual(result.writes, 1)
+        XCTAssertTrue(result.outputMatches)
+        XCTAssertEqual(result.rax, 42)
+        XCTAssertEqual(result.entry, 0x5000)
+        XCTAssertEqual(result.linkedAddress, 0x9000)
+    }
+
     func testNativeCoreRejectsInvalidFile() {
         let result = NativeCoreAPI.inspectELF([0, 1, 2, 3])
         XCTAssertEqual(result.code, -2)
