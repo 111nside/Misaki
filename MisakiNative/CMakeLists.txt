@@ -25,6 +25,8 @@ add_library(misaki_native STATIC
     Source/GuestGraphics21Bridge.cpp
     Source/GuestPM4.cpp
     Source/GuestPM4Bridge.cpp
+    Source/GuestPM4Indirect.cpp
+    Source/GuestPM4IndirectBridge.cpp
     Source/MisakiCoreBridge.cpp
 )
 target_include_directories(misaki_native PUBLIC Include)
@@ -75,4 +77,7 @@ if (BUILD_TESTING)
     add_executable(misaki_guest_pm4_tests Tests/GuestPM4Tests.cpp)
     target_link_libraries(misaki_guest_pm4_tests PRIVATE misaki_native)
     add_test(NAME native-guest-pm4-tests COMMAND misaki_guest_pm4_tests)
+    add_executable(misaki_pm423_tests Tests/GuestPM4IndirectTests.cpp)
+    target_link_libraries(misaki_pm423_tests PRIVATE misaki_native)
+    add_test(NAME native-pm4-indirect-render-state-tests COMMAND misaki_pm423_tests)
 endif()
