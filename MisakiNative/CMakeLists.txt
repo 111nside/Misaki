@@ -23,6 +23,8 @@ add_library(misaki_native STATIC
     Source/GuestGraphics20Bridge.cpp
     Source/GuestGraphics21.cpp
     Source/GuestGraphics21Bridge.cpp
+    Source/GuestPM4.cpp
+    Source/GuestPM4Bridge.cpp
     Source/MisakiCoreBridge.cpp
 )
 target_include_directories(misaki_native PUBLIC Include)
@@ -61,7 +63,6 @@ if (BUILD_TESTING)
     add_executable(misaki_guest_gpu_tests Tests/GuestGPUTests.cpp)
     target_link_libraries(misaki_guest_gpu_tests PRIVATE misaki_native)
     add_test(NAME native-guest-gpu-tests COMMAND misaki_guest_gpu_tests)
-
     add_executable(misaki_guest_graphics19_tests Tests/GuestGraphics19Tests.cpp)
     target_link_libraries(misaki_guest_graphics19_tests PRIVATE misaki_native)
     add_test(NAME native-graphics19-tests COMMAND misaki_guest_graphics19_tests)
@@ -71,4 +72,7 @@ if (BUILD_TESTING)
     add_executable(misaki_guest_gpu21_tests Tests/GuestGraphics21Tests.cpp)
     target_link_libraries(misaki_guest_gpu21_tests PRIVATE misaki_native)
     add_test(NAME native-gpu21-render-state-tests COMMAND misaki_guest_gpu21_tests)
+    add_executable(misaki_guest_pm4_tests Tests/GuestPM4Tests.cpp)
+    target_link_libraries(misaki_guest_pm4_tests PRIVATE misaki_native)
+    add_test(NAME native-guest-pm4-tests COMMAND misaki_guest_pm4_tests)
 endif()
