@@ -4,4 +4,5 @@
 #include "MisakiCoreBridge.h"
 #include "MisakiModuleLifecycleBridge.h"
 #include "MisakiGPUBridge.h"
+#include "MisakiGPU19Bridge.h"
 #endif
