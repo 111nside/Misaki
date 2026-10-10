@@ -9,6 +9,8 @@ struct MisakiApp: App {
                     .tabItem { Label("Emulator", systemImage: "gamecontroller") }
                 Milestone9View()
                     .tabItem { Label("Core", systemImage: "cpu") }
+                Milestone25View()
+                    .tabItem { Label("GCN ISA", systemImage: "curlybraces.square") }
                 Milestone24View()
                     .tabItem { Label("PM4 State", systemImage: "slider.horizontal.3") }
                 Milestone23View()

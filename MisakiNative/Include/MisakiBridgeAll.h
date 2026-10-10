@@ -10,4 +10,5 @@
 #include "MisakiPM4Bridge.h"
 #include "MisakiPM423Bridge.h"
 #include "MisakiPM424Bridge.h"
+#include "MisakiGCN25Bridge.h"
 #endif

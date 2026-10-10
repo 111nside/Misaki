@@ -29,6 +29,8 @@ add_library(misaki_native STATIC
     Source/GuestPM4IndirectBridge.cpp
     Source/GuestPM4State.cpp
     Source/GuestPM4StateBridge.cpp
+    Source/GuestGCNISA.cpp
+    Source/GuestGCNISABridge.cpp
     Source/MisakiCoreBridge.cpp
 )
 target_include_directories(misaki_native PUBLIC Include)
@@ -85,4 +87,7 @@ if (BUILD_TESTING)
     add_executable(misaki_pm424_tests Tests/GuestPM4StateTests.cpp)
     target_link_libraries(misaki_pm424_tests PRIVATE misaki_native)
     add_test(NAME native-pm424-draw-state-tests COMMAND misaki_pm424_tests)
+    add_executable(misaki_guest_gcn25_tests Tests/GuestGCNISATests.cpp)
+    target_link_libraries(misaki_guest_gcn25_tests PRIVATE misaki_native)
+    add_test(NAME native-gcn25-shader-decoder-tests COMMAND misaki_guest_gcn25_tests)
 endif()
