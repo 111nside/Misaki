@@ -21,6 +21,8 @@ add_library(misaki_native STATIC
     Source/GuestGraphics19Bridge.cpp
     Source/GuestGraphics20.cpp
     Source/GuestGraphics20Bridge.cpp
+    Source/GuestGraphics21.cpp
+    Source/GuestGraphics21Bridge.cpp
     Source/MisakiCoreBridge.cpp
 )
 target_include_directories(misaki_native PUBLIC Include)
@@ -66,4 +68,7 @@ if (BUILD_TESTING)
     add_executable(misaki_guest_graphics20_tests Tests/GuestGraphics20Tests.cpp)
     target_link_libraries(misaki_guest_graphics20_tests PRIVATE misaki_native)
     add_test(NAME native-graphics20-queue-tests COMMAND misaki_guest_graphics20_tests)
+    add_executable(misaki_guest_gpu21_tests Tests/GuestGraphics21Tests.cpp)
+    target_link_libraries(misaki_guest_gpu21_tests PRIVATE misaki_native)
+    add_test(NAME native-gpu21-render-state-tests COMMAND misaki_guest_gpu21_tests)
 endif()

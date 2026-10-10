@@ -6,4 +6,5 @@
 #include "MisakiGPUBridge.h"
 #include "MisakiGPU19Bridge.h"
 #include "MisakiGPU20Bridge.h"
+#include "MisakiGPU21Bridge.h"
 #endif
