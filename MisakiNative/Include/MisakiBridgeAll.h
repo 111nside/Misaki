@@ -9,4 +9,5 @@
 #include "MisakiGPU21Bridge.h"
 #include "MisakiPM4Bridge.h"
 #include "MisakiPM423Bridge.h"
+#include "MisakiPM424Bridge.h"
 #endif
