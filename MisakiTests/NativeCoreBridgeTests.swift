@@ -90,6 +90,27 @@ final class NativeCoreBridgeTests: XCTestCase {
         XCTAssertEqual(result.linkedAddress, 0x9000)
     }
 
+    func testVersionedLibraryCatalogAndELFRelocations() {
+        let result = NativeCoreAPI.runLibraryCatalogDiagnostic()
+        XCTAssertTrue(result.passed)
+        XCTAssertEqual(result.status, 0)
+        XCTAssertEqual(result.abiVersion, 1)
+        XCTAssertEqual(result.catalogVersions, 2)
+        XCTAssertEqual(result.imports, 6)
+        XCTAssertEqual(result.relativeRelocations, 1)
+        XCTAssertEqual(result.absoluteRelocations, 3)
+        XCTAssertEqual(result.pcRelativeRelocations, 2)
+        XCTAssertEqual(result.instructions, 5)
+        XCTAssertEqual(result.rax, 42)
+        XCTAssertEqual(result.linkedAddress, 0x9000)
+        XCTAssertEqual(result.absolute64, 0x8FF8)
+        XCTAssertEqual(result.absolute32, 0x9004)
+        XCTAssertEqual(result.pc32, 0x3ECC)
+        XCTAssertTrue(result.halted)
+        XCTAssertTrue(result.stackRestored)
+        XCTAssertTrue(result.importReadOnly)
+    }
+
     func testNativeCoreRejectsInvalidFile() {
         let result = NativeCoreAPI.inspectELF([0, 1, 2, 3])
         XCTAssertEqual(result.code, -2)

@@ -5,9 +5,48 @@
 #include "../Include/GuestServices.hpp"
 #include "../Include/GuestProcesses.hpp"
 #include "../Include/GuestSystemLibraries.hpp"
+#include "../Include/GuestLibraryCatalog.hpp"
 #include "../Include/GuestX64Backend.hpp"
 
 extern "C" {
+int32_t misaki_core_run_catalog_diagnostic(MisakiLibraryCatalogReport *report) {
+    if (!report) return -1;
+    *report = MisakiLibraryCatalogReport{};
+    try {
+        const auto run = misaki::runCatalogDynamicDiagnostic();
+        if (!run) return -2;
+        report->abi_version = 1;
+        report->catalog_versions = run->catalogVersions;
+        report->imported_symbols = run->linked.importedSymbols;
+        report->relative_relocations = run->linked.relativeRelocations;
+        report->absolute_relocations = run->linked.absoluteRelocations;
+        report->pc_relative_relocations = run->linked.pcRelativeRelocations;
+        report->instructions = run->execution.state.instructions;
+        report->halted = run->execution.stop == misaki::X64Stop::halted ? 1u : 0u;
+        report->stack_restored = run->execution.stackRestored() ? 1u : 0u;
+        report->import_read_only = run->importReadOnly ? 1u : 0u;
+        report->rax = run->execution.rax();
+        report->linked_address = run->linked.firstImportTarget;
+        report->absolute64 = run->absolute64;
+        report->absolute32 = run->unsigned32;
+        report->pc32 = run->relative32;
+        const bool passed = report->abi_version == 1 &&
+                            report->catalog_versions == 2 &&
+                            report->imported_symbols == 6 &&
+                            report->relative_relocations == 1 &&
+                            report->absolute_relocations == 3 &&
+                            report->pc_relative_relocations == 2 &&
+                            report->instructions == 5 && report->halted == 1 &&
+                            report->stack_restored == 1 && report->import_read_only == 1 &&
+                            report->rax == 42 && report->linked_address == 0x9000 &&
+                            report->absolute64 == 0x8FF8 &&
+                            report->absolute32 == 0x9004 && report->pc32 == 0x3ECC;
+        return passed ? 0 : -3;
+    } catch (...) {
+        return -4;
+    }
+}
+
 int32_t misaki_core_run_system_library_diagnostic(MisakiSystemLibraryReport *report) {
     if (!report) return -1;
     *report = MisakiSystemLibraryReport{};
@@ -203,7 +242,7 @@ int32_t misaki_core_run_cpu_diagnostic(MisakiNativeCPUReport *report) {
     }
 }
 
-const char *misaki_core_version(void) { return "0.15.0-native-library-services"; }
+const char *misaki_core_version(void) { return "0.16.0-versioned-catalog"; }
 
 int32_t misaki_core_run_diagnostic(MisakiCoreReport *report) {
     if (!report) return -1;

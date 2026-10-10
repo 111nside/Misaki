@@ -10,6 +10,7 @@ struct Milestone9View: View {
     @State private var serviceText: String?
     @State private var processText: String?
     @State private var systemLibraryText: String?
+    @State private var catalogText: String?
 
     var body: some View {
         NavigationStack {
@@ -117,6 +118,21 @@ struct Milestone9View: View {
                             .textSelection(.enabled)
                     }
                 }
+                Section("Milestone 16 · Guest library catalog") {
+                    Button {
+                        runCatalogDiagnostic()
+                    } label: {
+                        Label("Execute versioned library and relocation test", systemImage: "books.vertical")
+                    }
+                    Text("Loads an ordinary self-authored ELF64 module, selects a versioned guest library, applies seven relocations, and calls its function on the native C++ CPU. This is not a Sony PRX/NID resolver.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    if let catalogText {
+                        Text(catalogText)
+                            .font(.system(.footnote, design: .monospaced))
+                            .textSelection(.enabled)
+                    }
+                }
                 Section("Native engine") {
                     Label("C++17 core with C / Swift bridge", systemImage: "checkmark.circle")
                     Label("Modular instruction execution interface", systemImage: "checkmark.circle")
@@ -126,6 +142,7 @@ struct Milestone9View: View {
                     Label("Bounded guest service dispatcher and cooperative scheduling", systemImage: "checkmark.circle")
                     Label("Isolated guest PIDs and read-only virtual filesystem", systemImage: "checkmark.circle")
                     Label("Integrated ELF -> guest library -> VFS services", systemImage: "checkmark.circle")
+                    Label("Versioned test-library selection and additional RELA types", systemImage: "checkmark.circle")
                 }
                 Section("Not yet implemented") {
                     Label("Full x86-64, SSE/AVX and optimized ARM64 translation", systemImage: "xmark.circle")
@@ -138,6 +155,11 @@ struct Milestone9View: View {
             }
             .navigationTitle("Native core")
         }
+    }
+
+    private func runCatalogDiagnostic() {
+        let result = NativeCoreAPI.runLibraryCatalogDiagnostic()
+        catalogText = "Guest library catalog: \(result.passed ? "PASS" : "FAIL")\nRAX=\(result.rax)\nInstructions=\(result.instructions)\nCatalog versions=\(result.catalogVersions)\nImports=\(result.imports)\nRelative/Absolute/PC-relative=\(result.relativeRelocations)/\(result.absoluteRelocations)/\(result.pcRelativeRelocations)\nABS64=0x\(String(result.absolute64, radix: 16))\nPC32=\(result.pc32)\nStack restored=\(result.stackRestored)\nRead-only imports=\(result.importReadOnly)\nStatus=\(result.status)"
     }
 
     private func runSystemLibraryDiagnostic() {

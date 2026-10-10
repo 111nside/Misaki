@@ -12,6 +12,7 @@ add_library(misaki_native STATIC
     Source/GuestServices.cpp
     Source/GuestProcesses.cpp
     Source/GuestSystemLibraries.cpp
+    Source/GuestLibraryCatalog.cpp
     Source/MisakiCoreBridge.cpp
 )
 target_include_directories(misaki_native PUBLIC Include)
@@ -44,4 +45,7 @@ if (BUILD_TESTING)
     add_executable(misaki_system_library_tests Tests/GuestSystemLibrariesTests.cpp)
     target_link_libraries(misaki_system_library_tests PRIVATE misaki_native)
     add_test(NAME native-system-library-tests COMMAND misaki_system_library_tests)
+    add_executable(misaki_library_catalog_tests Tests/GuestLibraryCatalogTests.cpp)
+    target_link_libraries(misaki_library_catalog_tests PRIVATE misaki_native)
+    add_test(NAME native-library-catalog-tests COMMAND misaki_library_catalog_tests)
 endif()

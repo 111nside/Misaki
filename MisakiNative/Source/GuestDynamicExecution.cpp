@@ -183,7 +183,9 @@ std::optional<DynamicLinkSummary> loadAndLinkDynamicELF(
     summary.entry = image->entry;
     summary.mappedSegments = image->segments;
     summary.neededLibraries = static_cast<u32>(needed.size());
-    std::set<u64> patchedSlots;
+    // Record each byte interval, not only slot starts: overlapping mixed-width
+    // RELA records are rejected instead of silently overwriting one another.
+    std::vector<std::pair<u64, u64>> patchedRanges;
     for (u64 i = 0; i < relaSize / 24; ++i) {
         auto at = file.offset(relaTable + i * 24, 24);
         if (!at) return std::nullopt;
@@ -192,15 +194,25 @@ std::optional<DynamicLinkSummary> loadAndLinkDynamicELF(
         const auto relocType = static_cast<u32>(infoWord);
         const auto symbolIndex = infoWord >> 32;
         const auto addend = static_cast<std::int64_t>(read64(elf, *at + 16));
-        u64 slot = 0;
-        if (!add(bias, relocOffset, slot) || !patchedSlots.insert(slot).second)
+        const bool relative = relocType == 8 && symbolIndex == 0;
+        const bool legacyImport = (relocType == 6 || relocType == 7) &&
+                                  symbolIndex > 0 && addend == 0;
+        const bool extendedImport = (relocType == 1 || relocType == 2 ||
+                                     relocType == 4 || relocType == 10 ||
+                                     relocType == 11) && symbolIndex > 0;
+        if (!relative && !legacyImport && !extendedImport) return std::nullopt;
+        const u64 width = (relocType == 2 || relocType == 4 ||
+                           relocType == 10 || relocType == 11) ? 4 : 8;
+        u64 slot = 0, end = 0;
+        if (!add(bias, relocOffset, slot) || !add(slot, width, end))
             return std::nullopt;
-        u64 value = 0;
-        if (relocType == 8 && symbolIndex == 0) { // R_X86_64_RELATIVE
-            if (!addSigned(bias, addend, value)) return std::nullopt;
-            ++summary.relativeRelocations;
-        } else if ((relocType == 6 || relocType == 7) && symbolIndex > 0 &&
-                   symbolIndex < maxSymbols && addend == 0) {
+        for (const auto &used : patchedRanges)
+            if (slot < used.second && used.first < end) return std::nullopt;
+        patchedRanges.push_back({slot, end});
+
+        u64 symbolAddress = 0;
+        if (!relative) {
+            if (symbolIndex >= maxSymbols) return std::nullopt;
             u64 symVaddr = 0;
             if (!add(symbolTable, symbolIndex * 24, symVaddr)) return std::nullopt;
             const auto symFile = file.offset(symVaddr, 24);
@@ -208,22 +220,64 @@ std::optional<DynamicLinkSummary> loadAndLinkDynamicELF(
             const auto nameIndex = read32(elf, *symFile);
             const auto sectionIndex = static_cast<unsigned>(elf[*symFile + 6]) |
                                       (unsigned(elf[*symFile + 7]) << 8);
-            if (sectionIndex != 0) return std::nullopt; // unresolved import only
+            if (sectionIndex != 0) return std::nullopt; // undefined imports only
             auto symbol = stringAt(file, stringTable, stringSize, nameIndex);
             if (!symbol) return std::nullopt;
             bool found = false;
             for (const auto &lib : needed) {
                 if (const auto target = modules.resolve(lib, *symbol)) {
                     if (found) return std::nullopt; // ambiguous dependency
-                    value = *target;
+                    symbolAddress = *target;
                     found = true;
                 }
             }
             if (!found) return std::nullopt;
-            if (summary.importedSymbols == 0) summary.firstImportTarget = value;
+            if (summary.importedSymbols == 0) summary.firstImportTarget = symbolAddress;
             ++summary.importedSymbols;
-        } else return std::nullopt;
-        if (!candidate.write64(slot, value)) return std::nullopt;
+        }
+        u64 value = 0;
+        if (relative) {
+            if (!addSigned(bias, addend, value)) return std::nullopt;
+            ++summary.relativeRelocations;
+        } else if (legacyImport) {
+            value = symbolAddress;
+        } else if (relocType == 1 || relocType == 10 || relocType == 11) {
+            // R_X86_64_64/32/32S: S + A, checked before truncation.
+            if (!addSigned(symbolAddress, addend, value)) return std::nullopt;
+            if (relocType == 10 && value > std::numeric_limits<u32>::max())
+                return std::nullopt;
+            if (relocType == 11) {
+                // A valid 32S relocation fits after sign-extension.
+                // Compare bit patterns to avoid signed out-of-range casts.
+                if (value > u64(std::numeric_limits<std::int32_t>::max()) &&
+                    value < std::numeric_limits<u64>::max() -
+                                u64(std::numeric_limits<std::int32_t>::max()))
+                    return std::nullopt;
+            }
+            ++summary.absoluteRelocations;
+        } else { // R_X86_64_PC32 / PLT32: S + A - P, signed 32-bit
+            u64 baseValue = 0;
+            if (!addSigned(symbolAddress, addend, baseValue)) return std::nullopt;
+            if (baseValue >= slot) {
+                const u64 magnitude = baseValue - slot;
+                if (magnitude > u64(std::numeric_limits<std::int32_t>::max()))
+                    return std::nullopt;
+                value = magnitude;
+            } else {
+                const u64 magnitude = slot - baseValue;
+                if (magnitude > (u64(1) << 31)) return std::nullopt;
+                value = u32(0) - static_cast<u32>(magnitude);
+            }
+            ++summary.pcRelativeRelocations;
+        }
+        if (width == 8) {
+            if (!candidate.write64(slot, value)) return std::nullopt;
+        } else {
+            u8 field[4];
+            for (unsigned k = 0; k < 4; ++k)
+                field[k] = static_cast<u8>(value >> (8 * k));
+            if (!candidate.writeBytes(slot, field, 4)) return std::nullopt;
+        }
     }
     memory = std::move(candidate);
     return summary;

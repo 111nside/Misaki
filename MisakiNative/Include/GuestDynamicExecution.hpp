@@ -18,6 +18,8 @@ struct DynamicLinkSummary {
     std::uint32_t neededLibraries = 0;
     std::uint32_t importedSymbols = 0;
     std::uint32_t relativeRelocations = 0;
+    std::uint32_t absoluteRelocations = 0;
+    std::uint32_t pcRelativeRelocations = 0;
     std::uint64_t firstImportTarget = 0;
 };
 

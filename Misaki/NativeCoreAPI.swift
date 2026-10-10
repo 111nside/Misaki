@@ -339,3 +339,60 @@ extension NativeCoreAPI {
         )
     }
 }
+
+
+/// The versioned ordinary-ELF catalog and expanded relocation diagnostic.
+/// These symbols and relocation fixtures are independently authored test data,
+/// not Sony PRX modules or PS4 firmware.
+struct NativeLibraryCatalogSnapshot {
+    let status: Int32
+    let abiVersion: UInt32
+    let catalogVersions: UInt32
+    let imports: UInt32
+    let relativeRelocations: UInt32
+    let absoluteRelocations: UInt32
+    let pcRelativeRelocations: UInt32
+    let instructions: UInt32
+    let halted: Bool
+    let stackRestored: Bool
+    let importReadOnly: Bool
+    let rax: UInt64
+    let linkedAddress: UInt64
+    let absolute64: UInt64
+    let absolute32: UInt32
+    let pc32: Int32
+
+    var passed: Bool {
+        status == 0 && abiVersion == 1 && catalogVersions == 2 &&
+        imports == 6 && relativeRelocations == 1 && absoluteRelocations == 3 &&
+        pcRelativeRelocations == 2 && instructions == 5 && halted &&
+        stackRestored && importReadOnly && rax == 42 &&
+        linkedAddress == 0x9000 && absolute64 == 0x8FF8 &&
+        absolute32 == 0x9004 && pc32 == 0x3ECC
+    }
+}
+
+extension NativeCoreAPI {
+    static func runLibraryCatalogDiagnostic() -> NativeLibraryCatalogSnapshot {
+        var report = MisakiLibraryCatalogReport()
+        let status = misaki_core_run_catalog_diagnostic(&report)
+        return NativeLibraryCatalogSnapshot(
+            status: status,
+            abiVersion: report.abi_version,
+            catalogVersions: report.catalog_versions,
+            imports: report.imported_symbols,
+            relativeRelocations: report.relative_relocations,
+            absoluteRelocations: report.absolute_relocations,
+            pcRelativeRelocations: report.pc_relative_relocations,
+            instructions: report.instructions,
+            halted: report.halted == 1,
+            stackRestored: report.stack_restored == 1,
+            importReadOnly: report.import_read_only == 1,
+            rax: report.rax,
+            linkedAddress: report.linked_address,
+            absolute64: report.absolute64,
+            absolute32: report.absolute32,
+            pc32: report.pc32
+        )
+    }
+}

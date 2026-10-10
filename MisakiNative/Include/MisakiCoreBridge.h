@@ -137,6 +137,28 @@ typedef struct MisakiSystemLibraryReport {
 
 int32_t misaki_core_run_system_library_diagnostic(MisakiSystemLibraryReport *report);
 
+// Milestone 16: versioned ordinary ELF guest-library catalog + additional
+// RELA relocations. This is not Sony PRX/NID or PS4 module compatibility.
+typedef struct MisakiLibraryCatalogReport {
+    uint32_t abi_version;
+    uint32_t catalog_versions;
+    uint32_t imported_symbols;
+    uint32_t relative_relocations;
+    uint32_t absolute_relocations;
+    uint32_t pc_relative_relocations;
+    uint32_t instructions;
+    uint32_t halted;
+    uint32_t stack_restored;
+    uint32_t import_read_only;
+    uint64_t rax;
+    uint64_t linked_address;
+    uint64_t absolute64;
+    uint32_t absolute32;
+    int32_t pc32;
+} MisakiLibraryCatalogReport;
+
+int32_t misaki_core_run_catalog_diagnostic(MisakiLibraryCatalogReport *report);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
