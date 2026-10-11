@@ -43,6 +43,12 @@ add_library(misaki_native STATIC
     Source/GuestFusedGCN30Bridge.cpp
     Source/GuestIntegratedRuntime.cpp
     Source/GuestIntegratedRuntimeBridge.cpp
+    Source/GuestPS4Formats.cpp
+    Source/GuestPS4Imports.cpp
+    Source/GuestGCNLanes.cpp
+    Source/GuestBootCoordinator.cpp
+    Source/GuestBootReadiness.cpp
+    Source/GuestPS4BootBridge.cpp
     Source/MisakiCoreBridge.cpp
 )
 target_include_directories(misaki_native PUBLIC Include)
@@ -126,4 +132,19 @@ if (BUILD_TESTING)
         target_link_libraries(misaki_integrated_${stage}_tests PRIVATE misaki_native)
         add_test(NAME integrated-${stage}-subsystem COMMAND misaki_integrated_${stage}_tests)
     endforeach()
+    add_executable(misaki_compat36_tests Tests/Compatibility36Tests.cpp)
+    target_link_libraries(misaki_compat36_tests PRIVATE misaki_native)
+    add_test(NAME compat36-self-structure COMMAND misaki_compat36_tests)
+    add_executable(misaki_compat37_tests Tests/Compatibility37Tests.cpp)
+    target_link_libraries(misaki_compat37_tests PRIVATE misaki_native)
+    add_test(NAME compat37-synthetic-sce-imports COMMAND misaki_compat37_tests)
+    add_executable(misaki_compat38_tests Tests/Compatibility38Tests.cpp)
+    target_link_libraries(misaki_compat38_tests PRIVATE misaki_native)
+    add_test(NAME compat38-gcn-cooperative-lanes COMMAND misaki_compat38_tests)
+    add_executable(misaki_compat39_tests Tests/Compatibility39Tests.cpp)
+    target_link_libraries(misaki_compat39_tests PRIVATE misaki_native)
+    add_test(NAME compat39-boot-integration COMMAND misaki_compat39_tests)
+    add_executable(misaki_compat40_tests Tests/Compatibility40Tests.cpp)
+    target_link_libraries(misaki_compat40_tests PRIVATE misaki_native)
+    add_test(NAME compat40-firmware-readiness COMMAND misaki_compat40_tests)
 endif()

@@ -17,4 +17,5 @@
 #include "MisakiMUBUFBridge.h"
 #include "MisakiFusedGCN30Bridge.h"
  #include "MisakiIntegratedRuntimeBridge.h"
+#include "MisakiPS4BootBridge.h"
 #endif
