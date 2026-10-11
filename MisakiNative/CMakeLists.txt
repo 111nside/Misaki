@@ -49,6 +49,12 @@ add_library(misaki_native STATIC
     Source/GuestBootCoordinator.cpp
     Source/GuestBootReadiness.cpp
     Source/GuestPS4BootBridge.cpp
+    Source/GuestSCEStaging.cpp
+    Source/GuestSCEBinding.cpp
+    Source/GuestSCEKernel.cpp
+    Source/GuestGCNMemoryStage.cpp
+    Source/GuestPS4PhaseTwo.cpp
+    Source/GuestPS4PhaseTwoBridge.cpp
     Source/MisakiCoreBridge.cpp
 )
 target_include_directories(misaki_native PUBLIC Include)
@@ -147,4 +153,13 @@ if (BUILD_TESTING)
     add_executable(misaki_compat40_tests Tests/Compatibility40Tests.cpp)
     target_link_libraries(misaki_compat40_tests PRIVATE misaki_native)
     add_test(NAME compat40-firmware-readiness COMMAND misaki_compat40_tests)
+endif()
+
+# Mega update 41–45: five separate independent CTest targets.
+if (BUILD_TESTING)
+    foreach(stage IN ITEMS 41 42 43 44 45)
+        add_executable(misaki_compat${stage}_tests Tests/Compatibility${stage}Tests.cpp)
+        target_link_libraries(misaki_compat${stage}_tests PRIVATE misaki_native)
+        add_test(NAME compat${stage}-integrated-stage COMMAND misaki_compat${stage}_tests)
+    endforeach()
 endif()
