@@ -68,6 +68,13 @@ add_library(misaki_native STATIC
     Source/GuestGCN54.cpp
     Source/GuestSCE55.cpp
     Source/GuestSCE55Bridge.cpp
+    Source/GuestSCE56.cpp
+    Source/GuestServices57.cpp
+    Source/GuestGPUMemory58.cpp
+    Source/GuestPersistent59.cpp
+    Source/GuestCompatibility60.cpp
+    Source/GuestMega60.cpp
+    Source/GuestMega60Bridge.cpp
 )
 target_include_directories(misaki_native PUBLIC Include)
 if (MSVC)
@@ -212,5 +219,14 @@ if (BUILD_TESTING)
         add_executable(misaki_compat${stage}_tests Tests/Compatibility${stage}Tests.cpp)
         target_link_libraries(misaki_compat${stage}_tests PRIVATE misaki_native)
         add_test(NAME compat${stage}-ps4-research COMMAND misaki_compat${stage}_tests)
+    endforeach()
+endif()
+
+# Mega update 56-60: independent regression suites; all earlier suites remain.
+if (BUILD_TESTING)
+    foreach(stage IN ITEMS 56 57 58 59 60)
+        add_executable(misaki_compat${stage}_tests Tests/Compatibility${stage}Tests.cpp)
+        target_link_libraries(misaki_compat${stage}_tests PRIVATE misaki_native)
+        add_test(NAME compat${stage}-integration-tests COMMAND misaki_compat${stage}_tests)
     endforeach()
 endif()
