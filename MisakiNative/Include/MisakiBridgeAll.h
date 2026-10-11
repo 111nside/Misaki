@@ -13,4 +13,5 @@
 #include "MisakiGCN25Bridge.h"
 #include "MisakiShaderIRBridge.h"
 #include "MisakiMetalIRBridge.h"
+#include "MisakiMetalResourcesBridge.h"
 #endif
