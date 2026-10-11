@@ -39,6 +39,8 @@ add_library(misaki_native STATIC
     Source/GuestMetalResourcesBridge.cpp
     Source/GuestMUBUF.cpp
     Source/GuestMUBUFBridge.cpp
+    Source/GuestFusedGCN30.cpp
+    Source/GuestFusedGCN30Bridge.cpp
     Source/MisakiCoreBridge.cpp
 )
 target_include_directories(misaki_native PUBLIC Include)
@@ -110,4 +112,7 @@ if (BUILD_TESTING)
     add_executable(misaki_guest_mubuf29_tests Tests/GuestMUBUFTests.cpp)
     target_link_libraries(misaki_guest_mubuf29_tests PRIVATE misaki_native)
     add_test(NAME native-gcn29-mubuf-metal-tests COMMAND misaki_guest_mubuf29_tests)
+    add_executable(misaki_guest_gcn30_tests Tests/GuestFusedGCN30Tests.cpp)
+    target_link_libraries(misaki_guest_gcn30_tests PRIVATE misaki_native)
+    add_test(NAME native-gcn30-interleaved-metal-tests COMMAND misaki_guest_gcn30_tests)
 endif()

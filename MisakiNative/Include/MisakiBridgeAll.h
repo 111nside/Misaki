@@ -15,4 +15,5 @@
 #include "MisakiMetalIRBridge.h"
 #include "MisakiMetalResourcesBridge.h"
 #include "MisakiMUBUFBridge.h"
+#include "MisakiFusedGCN30Bridge.h"
 #endif
