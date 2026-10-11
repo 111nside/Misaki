@@ -55,6 +55,12 @@ add_library(misaki_native STATIC
     Source/GuestGCNMemoryStage.cpp
     Source/GuestPS4PhaseTwo.cpp
     Source/GuestPS4PhaseTwoBridge.cpp
+    Source/GuestSCE46.cpp
+    Source/GuestSCE47.cpp
+    Source/GuestVM48.cpp
+    Source/GuestGCN49.cpp
+    Source/GuestSCE50.cpp
+    Source/GuestSCE50Bridge.cpp
     Source/MisakiCoreBridge.cpp
 )
 target_include_directories(misaki_native PUBLIC Include)
@@ -162,4 +168,34 @@ if (BUILD_TESTING)
         target_link_libraries(misaki_compat${stage}_tests PRIVATE misaki_native)
         add_test(NAME compat${stage}-integrated-stage COMMAND misaki_compat${stage}_tests)
     endforeach()
+endif()
+
+if (BUILD_TESTING)
+  add_executable(misaki_compat46_tests Tests/Compatibility46Tests.cpp)
+  target_link_libraries(misaki_compat46_tests PRIVATE misaki_native)
+  add_test(NAME compat46-sce-multi-segment-rela COMMAND misaki_compat46_tests)
+endif()
+
+if (BUILD_TESTING)
+  add_executable(misaki_compat47_tests Tests/Compatibility47Tests.cpp)
+  target_link_libraries(misaki_compat47_tests PRIVATE misaki_native)
+  add_test(NAME compat47-nid-module-dependency COMMAND misaki_compat47_tests)
+endif()
+
+if (BUILD_TESTING)
+  add_executable(misaki_compat48_tests Tests/Compatibility48Tests.cpp)
+  target_link_libraries(misaki_compat48_tests PRIVATE misaki_native)
+  add_test(NAME compat48-guest-vm-protection COMMAND misaki_compat48_tests)
+endif()
+
+if (BUILD_TESTING)
+  add_executable(misaki_compat49_tests Tests/Compatibility49Tests.cpp)
+  target_link_libraries(misaki_compat49_tests PRIVATE misaki_native)
+  add_test(NAME compat49-guest-pm4-presentation COMMAND misaki_compat49_tests)
+endif()
+
+if (BUILD_TESTING)
+  add_executable(misaki_compat50_tests Tests/Compatibility50Tests.cpp)
+  target_link_libraries(misaki_compat50_tests PRIVATE misaki_native)
+  add_test(NAME compat50-initialization-boot-gate COMMAND misaki_compat50_tests)
 endif()

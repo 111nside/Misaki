@@ -9,6 +9,8 @@ struct MisakiApp: App {
                     .tabItem { Label("Emulator", systemImage: "gamecontroller") }
                 Milestone9View()
                     .tabItem { Label("Core", systemImage: "cpu") }
+                Milestone46to50View()
+                    .tabItem { Label("SCE 50", systemImage: "memorychip") }
                 Milestone41to45View()
                     .tabItem { Label("SCE Runtime", systemImage: "cpu.fill") }
                 Milestone36to40View()
