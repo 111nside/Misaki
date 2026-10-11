@@ -41,6 +41,8 @@ add_library(misaki_native STATIC
     Source/GuestMUBUFBridge.cpp
     Source/GuestFusedGCN30.cpp
     Source/GuestFusedGCN30Bridge.cpp
+    Source/GuestIntegratedRuntime.cpp
+    Source/GuestIntegratedRuntimeBridge.cpp
     Source/MisakiCoreBridge.cpp
 )
 target_include_directories(misaki_native PUBLIC Include)
@@ -115,4 +117,13 @@ if (BUILD_TESTING)
     add_executable(misaki_guest_gcn30_tests Tests/GuestFusedGCN30Tests.cpp)
     target_link_libraries(misaki_guest_gcn30_tests PRIVATE misaki_native)
     add_test(NAME native-gcn30-interleaved-metal-tests COMMAND misaki_guest_gcn30_tests)
+endif()
+
+# Five independent Phase-2 subsystem suites are kept separate for diagnosis.
+if (BUILD_TESTING)
+    foreach(stage IN ITEMS 31 32 33 34 35)
+        add_executable(misaki_integrated_${stage}_tests Tests/Integrated${stage}Tests.cpp)
+        target_link_libraries(misaki_integrated_${stage}_tests PRIVATE misaki_native)
+        add_test(NAME integrated-${stage}-subsystem COMMAND misaki_integrated_${stage}_tests)
+    endforeach()
 endif()
