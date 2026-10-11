@@ -114,7 +114,8 @@ enum MetalResource28Runner {
     static func execute(aluSource: String, resourceSource: String,
                         inputBytes: [UInt8], initialOutput: [UInt32],
                         expectedRegisters: [UInt32],
-                        expectedOutput: [UInt32]) -> MetalResource28Execution {
+                        expectedOutput: [UInt32],
+                        resourceEntry: String = "misaki_resource28") -> MetalResource28Execution {
         guard !aluSource.isEmpty && !resourceSource.isEmpty &&
               inputBytes.count == 1024 && initialOutput.count == 64 &&
               expectedRegisters.count == 6 && expectedOutput.count == 64 else {
@@ -129,7 +130,7 @@ enum MetalResource28Runner {
             let aluLibrary = try device.makeLibrary(source: aluSource, options: options)
             let resourceLibrary = try device.makeLibrary(source: resourceSource, options: options)
             guard let aluFunction = aluLibrary.makeFunction(name: "misaki_ir27"),
-                  let resourceFunction = resourceLibrary.makeFunction(name: "misaki_resource28") else {
+                  let resourceFunction = resourceLibrary.makeFunction(name: resourceEntry) else {
                 return .failure("Generated Metal kernels could not be found")
             }
             let aluPipeline = try device.makeComputePipelineState(function: aluFunction)
