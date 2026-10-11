@@ -33,6 +33,8 @@ add_library(misaki_native STATIC
     Source/GuestGCNISABridge.cpp
     Source/GuestShaderIR.cpp
     Source/GuestShaderIRBridge.cpp
+    Source/GuestMetalIR.cpp
+    Source/GuestMetalIRBridge.cpp
     Source/MisakiCoreBridge.cpp
 )
 target_include_directories(misaki_native PUBLIC Include)
@@ -95,4 +97,7 @@ if (BUILD_TESTING)
     add_executable(misaki_guest_shader_ir26_tests Tests/GuestShaderIRTests.cpp)
     target_link_libraries(misaki_guest_shader_ir26_tests PRIVATE misaki_native)
     add_test(NAME native-gcn26-shader-ir-tests COMMAND misaki_guest_shader_ir26_tests)
+    add_executable(misaki_guest_metal_ir27_tests Tests/GuestMetalIRTests.cpp)
+    target_link_libraries(misaki_guest_metal_ir27_tests PRIVATE misaki_native)
+    add_test(NAME native-gcn27-metal-translation-tests COMMAND misaki_guest_metal_ir27_tests)
 endif()
