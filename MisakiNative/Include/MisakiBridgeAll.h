@@ -20,4 +20,5 @@
 #include "MisakiPS4BootBridge.h"
 #include "MisakiPS4PhaseTwoBridge.h"
 #include "MisakiMega50Bridge.h"
+#include "MisakiMega55Bridge.h"
 #endif

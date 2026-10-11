@@ -62,6 +62,12 @@ add_library(misaki_native STATIC
     Source/GuestSCE50.cpp
     Source/GuestSCE50Bridge.cpp
     Source/MisakiCoreBridge.cpp
+    Source/GuestSCE51.cpp
+    Source/GuestSCE52.cpp
+    Source/GuestKernel53.cpp
+    Source/GuestGCN54.cpp
+    Source/GuestSCE55.cpp
+    Source/GuestSCE55Bridge.cpp
 )
 target_include_directories(misaki_native PUBLIC Include)
 if (MSVC)
@@ -198,4 +204,13 @@ if (BUILD_TESTING)
   add_executable(misaki_compat50_tests Tests/Compatibility50Tests.cpp)
   target_link_libraries(misaki_compat50_tests PRIVATE misaki_native)
   add_test(NAME compat50-initialization-boot-gate COMMAND misaki_compat50_tests)
+endif()
+
+# Mega update 51-55: independently runnable compatibility CTest suites.
+if (BUILD_TESTING)
+    foreach(stage IN ITEMS 51 52 53 54 55)
+        add_executable(misaki_compat${stage}_tests Tests/Compatibility${stage}Tests.cpp)
+        target_link_libraries(misaki_compat${stage}_tests PRIVATE misaki_native)
+        add_test(NAME compat${stage}-ps4-research COMMAND misaki_compat${stage}_tests)
+    endforeach()
 endif()
