@@ -3,6 +3,8 @@ import UniformTypeIdentifiers
 
 struct ContentView: View {
     @State private var showingImporter = false
+    @State private var manualExecutables: [URL] = []
+    @State private var manualImportStatus: String?
     @State private var fileName: String?
     @State private var header: ELFHeader?
     @State private var fileSize: Int64?
@@ -89,6 +91,26 @@ struct ContentView: View {
                         Text(advancedResult)
                             .font(.system(.footnote, design: .monospaced))
                             .textSelection(.enabled)
+                    }
+                }
+                Section("Import from Misaki Documents") {
+                    Text("Copy an .sprx, .self, or .elf into Files → On My iPhone → Misaki, then tap Refresh files. This does not use the iOS file picker.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                    Button {
+                        refreshManualExecutables()
+                    } label: {
+                        Label("Refresh files", systemImage: "arrow.clockwise")
+                    }
+                    if let manualImportStatus {
+                        Text(manualImportStatus)
+                            .font(.footnote).foregroundStyle(.secondary)
+                    }
+                    ForEach(manualExecutables, id: \.path) { executable in
+                        Button {
+                            inspectFile(at: executable)
+                        } label: {
+                            Label(executable.lastPathComponent, systemImage: "doc")
+                        }
                     }
                 }
                 Section("Import executable") {
@@ -194,6 +216,33 @@ struct ContentView: View {
             advancedResult = "Extended CPU test: \(pass ? "PASS" : "FAIL")\nRAX=\(cpu.rax), ZF=\(cpu.zeroFlag), instructions=\(cpu.executedInstructions)"
         } catch {
             advancedResult = "Extended CPU test failed: \(error.localizedDescription)"
+        }
+    }
+
+    private func refreshManualExecutables() {
+        do {
+            let documents = try FileManager.default.url(
+                for: .documentDirectory,
+                in: .userDomainMask,
+                appropriateFor: nil,
+                create: true
+            )
+            let urls = try FileManager.default.contentsOfDirectory(
+                at: documents,
+                includingPropertiesForKeys: [.isRegularFileKey],
+                options: [.skipsHiddenFiles]
+            )
+            let supported: Set<String> = ["sprx", "self", "elf", "bin"]
+            manualExecutables = urls.filter { url in
+                guard supported.contains(url.pathExtension.lowercased()) else { return false }
+                return (try? url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true
+            }.sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
+            manualImportStatus = manualExecutables.isEmpty
+                ? "No executable files found in Misaki's Documents folder. Copy your .sprx file into On My iPhone → Misaki, then refresh."
+                : "Found \(manualExecutables.count) executable file(s). Tap one to inspect it."
+        } catch {
+            manualExecutables = []
+            manualImportStatus = "Unable to scan Documents: \(error.localizedDescription)"
         }
     }
 
