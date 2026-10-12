@@ -125,7 +125,7 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("Misaki")
-            .fileImporter(isPresented: $showingImporter, allowedContentTypes: [.misakiSPRX, .misakiSELF, .misakiELF, .data, .item]) { result in
+            .fileImporter(isPresented: $showingImporter, allowedContentTypes: [.item]) { result in
                 switch result {
                 case .failure(let error): errorMessage = error.localizedDescription
                 case .success(let url): inspectFile(at: url)
