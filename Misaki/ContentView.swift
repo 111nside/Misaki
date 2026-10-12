@@ -95,7 +95,7 @@ struct ContentView: View {
                     Button {
                         showingImporter = true
                     } label: {
-                        Label("Choose ELF file", systemImage: "square.and.arrow.down")
+                        Label("Choose PS4 executable", systemImage: "square.and.arrow.down")
                     }
                     Text("Inspects ELF64 headers only. Imported executables are never run.")
                         .font(.footnote).foregroundStyle(.secondary)
@@ -125,7 +125,7 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("Misaki")
-            .fileImporter(isPresented: $showingImporter, allowedContentTypes: [.data, .item]) { result in
+            .fileImporter(isPresented: $showingImporter, allowedContentTypes: [.misakiSPRX, .misakiSELF, .misakiELF, .data, .item]) { result in
                 switch result {
                 case .failure(let error): errorMessage = error.localizedDescription
                 case .success(let url): inspectFile(at: url)
